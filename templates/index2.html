@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Script Runner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+    body {
+        background-image: url('{{ url_for('static', filename='rm222batch3-mind-06.jpg') }}');
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+    .container {
+        padding: 20px;
+        margin: 0 auto;
+        width: 80%;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .nav-container {
+        background-color: #0066cc;
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    .nav-links {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        text-align: center;
+    }
+    .nav-links li {
+        display: inline;
+        margin-right: 20px;
+    }
+    .nav-links li a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 10px;
+    }
+    .nav-links li a:hover {
+        background-color: #0055cc;
+        border-radius: 10px;
+    }
+    .scripts-container {
+        background-color: rgba(4, 10, 122, 0.11);
+        padding: 20px;
+        border-radius: 10px;
+        color: #ffffff;
+    }
+    label {
+        font-weight: bold;
+        font-size: 20px;
+        color: #003399;
+        text-transform: capitalize;
+    }
+    .script-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .script-container {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        background-color: rgba(0, 138, 83, 0.25) !important;
+        padding: 10px !important;
+        gap: 10px;
+        width: 30%;
+        margin-bottom: 20px;
+    }
+    .button-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .button {
+        width: 150px; /* Adjust width */
+        height: 50px; /* Adjust height */
+        font-size: 16px; /* Adjust font size */
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        color: white;
+    }
+    .run-button {
+        background-color: #28a745;
+    }
+    .stop-button {
+        background-color: grey;
+    }
+    .stop-button:disabled {
+        background-color: grey;
+    }
+    /* Add this CSS to make the checkbox larger */
+    input[type="checkbox"] {
+        margin-left: 70px;
+        width: 20px;
+        height: 20px;
+        transform: scale(.7); /* Scale the checkbox */
+        margin-right: 1px;
+    }
+
+    /* Scheduled section */
+    .schedule-section {
+        background-color: rgba(4, 10, 122, 0.11);
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        color: #ffffff;
+    }
+
+    /* Style date and time input fields */
+    input[type="date"],
+    input[type="time"] {
+        width: 300px;
+        height: 40px;
+        font-size: 18px;
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Python Script Runner</h1>
+        <div class="nav-container">
+            <ul class="nav-links">
+                <li><a href="/">Scrape Products</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </div>
+        <div class="scripts-container">
+            <form id="script-form">
+                <h2>Select Scripts to Run:</h2>
+                <div class="script-row">
+                    {% for script in scripts %}
+                        <div class="script-container">
+                            <input type="checkbox" id="{{ script }}" name="scripts" value="{{ script }}">
+                            <label for="{{ script }}">{{ script[:-3]|capitalize }}</label>
+                        </div>
+                        {% if loop.index % 3 == 0 %}
+                            </div>
+                            <div class="script-row">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="button-container">
+            <button id="run-button" class="button run-button" type="button">Run</button>
+            <button id="stop-button" class="button stop-button" type="button" disabled>Stop</button>
+        </div>
+
+        <!-- Scheduled section -->
+        <div class="schedule-section">
+            <h2>Schedule Scripts:</h2>
+            <div>
+                <label for="date">Select Date:</label>
+                <input type="date" id="date" name="date">
+            </div>
+            <div>
+                <label for="time">Select Time:</label>
+                <input type="time" id="time" name="time">
+            </div>
+            <div>
+                <button id="schedule-button" class="button" type="button">Schedule</button>
+            </div>
+        </div>
+
+        <div id="consoles"></div>
+
+    </div>
+
+    <script>
+    document.getElementById('stop-button').addEventListener('click', function() {
+        fetch('/stop_scripts', {
+            method: 'POST'
+        }).then(response => response.json())
+            .then(data => {
+                console.log(data.status); // Optional: log the status
+                // Re-enable the run button and disable the stop button
+                document.getElementById('run-button').disabled = false;
+                document.getElementById('run-button').style.backgroundColor = '#28a745';
+                document.getElementById('stop-button').disabled = true;
+                document.getElementById('stop-button').style.backgroundColor = 'grey';
+                // Enable checkboxes
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.disabled = false;
+                });
+            });
+    });
+
+    document.getElementById('run-button').addEventListener('click', function() {
+        let formData = new FormData(document.getElementById('script-form'));
+
+        fetch('/run_scripts', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        }).then(response => response.json())
+            .then(data => {
+                let selectedScripts = formData.getAll('scripts');
+                let consolesDiv = document.getElementById('consoles');
+                consolesDiv.innerHTML = ''; // Clear previous consoles
+                selectedScripts.forEach(script => {
+                    let consoleDiv = document.createElement('div');
+                    consoleDiv.id = `console-${script}`;
+                    consoleDiv.className = 'console-box';
+                    consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: Running</p><p>URLs Scraped: 0</p>`;
+                    consolesDiv.appendChild(consoleDiv);
+                });
+                updateStatus();
+                // Disable the run button and enable the stop button
+                document.getElementById('run-button').disabled = true;
+                document.getElementById('run-button').style.backgroundColor = 'grey';
+                document.getElementById('stop-button').disabled = false;
+                document.getElementById('stop-button').style.backgroundColor = '#dc3545';
+                // Disable checkboxes only after the scripts have started running
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.disabled = true;
+                });
+            });
+    });
+
+    document.getElementById('schedule-button').addEventListener('click', function() {
+        let date = document.getElementById('date').value;
+        let time = document.getElementById('time').value;
+        let formData = new FormData(document.getElementById('script-form'));
+        formData.append('date', date);
+        formData.append('time', time);
+
+        fetch('/schedule_scripts', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        }).then(response => response.json())
+            .then(data => {
+                console.log(data.status); // Optional: log the status
+                // Clear the date and time inputs
+                document.getElementById('date').value = '';
+                document.getElementById('time').value = '';
+            });
+    });
+
+    function updateStatus() {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                let runningScripts = false;
+                for (let script in data) {
+                    let status = data[script];
+                    let outputElem = document.getElementById(`console-${script}`);
+                    if (outputElem) {
+                        outputElem.querySelector('p:first-child').innerText = `Status: ${status}`;
+                        if (status === 'Stopping') {
+                            outputElem.querySelector('p:last-child').innerText = 'URLs Scraped: Stopping...';
+                        } else {
+                            fetch(`/output/${script}`)
+                                .then(response => response.json())
+                                .then(outputData => {
+                                    outputElem.querySelector('p:last-child').innerText = `URLs Scraped: ${outputData.output.split('\n').length}`;
+                                });
+                        }
+                    } else {
+                        let consolesDiv = document.getElementById('consoles');
+                        let consoleDiv = document.createElement('div');
+                        consoleDiv.id = `console-${script}`;
+                        consoleDiv.className = 'console-box';
+                        consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: ${status}</p><p>URLs Scraped: 0</p>`;
+                        consolesDiv.appendChild(consoleDiv);
+                    }
+                    if (status === 'Running' || status === 'Queued') {
+                        runningScripts = true;
+                        document.getElementById(script).checked = true;
+                    }
+                }
+                if (runningScripts) {
+                    document.getElementById('run-button').disabled = true;
+                    document.getElementById('run-button').style.backgroundColor = 'grey';
+                    document.getElementById('stop-button').disabled = false;
+                    document.getElementById('stop-button').style.backgroundColor = '#dc3545';
+                    // Disable checkboxes
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.disabled = true;
+                    });
+                } else {
+                    document.getElementById('run-button').disabled = false;
+                    document.getElementById('run-button').style.backgroundColor = '#28a745';
+                    document.getElementById('stop-button').disabled = true;
+                    document.getElementById('stop-button').style.backgroundColor = 'grey';
+                    // Enable checkboxes
+                    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.disabled = false;
+                    });
+                }
+                setTimeout(updateStatus, 2000); // Update status every 2 seconds
+            });
+    }
+
+    // Initial call to update status when the page loads
+    updateStatus();
+    </script>
+</body>
+</html>

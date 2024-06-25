@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P.E.T.e</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+    body {
+        background-image: url('{{ url_for('static', filename='rm222batch3-mind-06.jpg') }}');
+        background-size: cover;
+        background-repeat: no-repeat;
+    }
+    .container {
+        padding: 20px;
+        margin: 0 auto;
+        width: 80%;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .nav-container {
+        background-color: #334376;
+        border-radius: 15px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+    .nav-links {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        text-align: center;
+    }
+    .nav-links li {
+        display: inline;
+        margin-right: 20px;
+    }
+    .nav-links li a {
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: bold;
+        padding: 10px;
+    }
+    .nav-links li a:hover {
+        background-color: #0055cc;
+        border-radius: 10px;
+    }
+    .scripts-container {
+        background-color: rgba(4, 10, 122, 0.11);
+        padding: 20px;
+        border-radius: 10px;
+        color: #334376;
+    }
+    label {
+        font-weight: bold;
+        font-size: 20px;
+        color: #334376;
+        text-transform: capitalize;
+    }
+    .script-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .script-container {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        background-color: rgba(0, 138, 83, 0.25) !important;
+        padding: 10px !important;
+        gap: 10px;
+        width: 30%;
+        margin-bottom: 20px;
+    }
+    .button-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .button {
+        width: 250px; /* Adjust width */
+        height: 35px; /* Adjust height */
+        font-size: 16px; /* Adjust font size */
+        padding: 10px;
+        border: none;
+        border-radius: 25px;
+        color: white;
+    }
+    .run-button {
+        background-color: #15a65e;
+    }
+    .stop-button {
+        background-color: grey;
+    }
+    .stop-button:disabled {
+        background-color: grey;
+    }
+    /* Add this CSS to make the checkbox larger */
+    input[type="checkbox"] {
+        margin-left: 70px;
+        width: 20px;
+        height: 20px;
+        transform: scale(.7); /* Scale the checkbox */
+        margin-right: 1px;
+    }
+
+    /* Scheduled section */
+    .schedule-section {
+    background-color: rgba(4, 10, 122, 0.11);
+    display: none; /* Add this line to hide the section by default */
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    color: #ffffff;
+}
+
+    /* Style date and time input fields */
+    input[type="date"],
+    input[type="time"] {
+        width: 300px;
+        height: 40px;
+        font-size: 18px;
+        padding: 5px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+    }
+
+    /* Flexbox container for schedule buttons */
+    .schedule-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+    }
+
+
+
+    .schedule-buttons .button {
+        width: 48%; /* Adjust width to fit two buttons in one line */
+    }
+
+    /* Toggle button */
+    .toggle-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-bottom: 20px;
+    }
+
+    .toggle-button.collapsed {
+    background-color: #6c757d; /* or any other style you prefer for the collapsed state */
+}
+
+    /* Scheduled task display */
+    .scheduled-task {
+        background-color: rgba(0, 138, 83, 0.25);
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 20px;
+    }
+
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-radius: 10px;
+        }
+
+        .popup h3 {
+            margin-top: 0;
+        }
+
+        .popup .form-group {
+            margin-bottom: 15px;
+        }
+
+        .popup .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .popup .form-group input[type="date"],
+        .popup .form-group input[type="time"],
+        .popup .form-group select {
+            width: 100%;
+            padding: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .popup .form-actions {
+            text-align: right;
+        }
+
+        .popup .form-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .popup .form-actions .cancel-button {
+            background-color: grey;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .popup .form-actions .save-button {
+            background-color: #28a745;
+            color: white;
+        }
+        /* Flex container for the date and time inputs */
+.schedule-date-time {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+
+.schedule-date-time .form-group {
+    flex: 1; /* Allow flex items to grow and fill available space */
+    min-width: 200px; /* Minimum width for form groups */
+}
+
+/* Adjust the width of input fields */
+.schedule-date-time input,
+.schedule-date-time select {
+    width: 100%;
+
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+        /* Add the logo resize styles */
+    .logo {
+        width: 150px; /* Set the desired width */
+        height: auto; /* Maintain aspect ratio */
+        display: block;
+
+    }
+
+        .header {
+    display: flex;
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Put space between logo and heading */
+    padding: 20px;
+}
+
+
+
+h1 {
+    text-align: center; /* Center align the heading */
+    margin: 0; /* Remove any default margin */
+    font-family: 'Anton';
+<!--    font-weight: regular;-->
+}
+
+
+
+.repeat-dropdown {
+        width: 150px; /* Adjust this value to your preferred width */
+        height: 50px; /* Adjust this value to your preferred height */
+        font-size: 16px; /* Adjust this value to your preferred font size */
+        padding: 5px 10px; /* Adjust padding as needed */
+        border-radius: 5px; /* Optional: rounds the corners */
+        border: 1px solid #ccc; /* Optional: adds a border */
+    }
+
+    /* Ensure consistent styling across different browsers */
+    .repeat-dropdown::-ms-expand {
+        display: none;
+    }
+
+    .repeat-dropdown:focus {
+        outline: none;
+        border-color: #007bff; /* Optional: changes border color when focused */
+    }
+
+    /* Style for the dropdown arrow (works in most modern browsers) */
+    .repeat-dropdown {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+        background-repeat: no-repeat;
+        background-position-x: calc(100% - 10px);
+        background-position-y: 50%;
+    }
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+        <img src="{{ url_for('static', filename='Screenshot 2024-06-20 at 6.33.36 PM.png') }}" alt="Logo" class="logo">
+        <h1>P.E.T.e</h1>
+    </div>
+        <div class="nav-container">
+<!--            <img src="{{ url_for('static', filename='rm222batch3-mind-06.jpg') }}" alt="Logo" class="logo">-->
+            <ul class="nav-links">
+                <li><a href="/">Scrape Products</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </div>
+        <div class="scripts-container">
+            <form id="script-form">
+                <h2>Select Scripts to Run:</h2>
+                <div class="script-row">
+                    {% for script in scripts %}
+                        <div class="script-container">
+                            <input type="checkbox" id="{{ script }}" name="scripts" value="{{ script }}">
+                            <label for="{{ script }}">{{ script[:-3]|capitalize }}</label>
+                        </div>
+                        {% if loop.index % 3 == 0 %}
+                            </div>
+                            <div class="script-row">
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </form>
+        </div>
+
+        <div class="button-container">
+            <button id="run-button" class="button run-button" type="button">Run</button>
+            <button id="stop-button" class="button stop-button" type="button" disabled>Stop</button>
+        </div>
+        <div id="scheduled-task-display" class="scheduled-task" style="display: none;">
+            <h3>Scheduled Task</h3>
+            <p id="scheduled-task-info"></p>
+        </div>
+        <!-- Toggle button for schedule section -->
+        <button id="toggle-schedule-button" class="toggle-button collapsed" type="button">Show Schedule Options</button>
+        <!-- Schedule section -->
+<div id="schedule-section" style="display: none;">
+    <h2>Schedule Scripts:</h2>
+    <div class="schedule-date-time">
+        <div class="form-group">
+            <label for="start-date">Start Date:</label>
+            <input type="date" id="start-date" name="start-date">
+        </div>
+        <div class="form-group">
+            <label for="start-time">Start Time:</label>
+            <input type="time" id="start-time" name="start-time">
+        </div>
+        <div class="form-group">
+        <label for="recurrence-type">Repeat:</label>
+        <select id="recurrence-type" name="recurrence-type" class="repeat-dropdown">
+        <option value="once">Once</option>
+        <option value="monthly">Monthly</option>
+        </select>
+</div>
+    </div>
+
+    <div class="schedule-buttons">
+        <button id="schedule-button" class="button" type="button">Schedule</button>
+        <button id="stop-schedule-button" class="button" type="button">Stop Scheduling</button>
+    </div>
+</div>
+
+        <!-- Schedule section -->
+<!--        <div class="schedule-section" id="schedule-section">-->
+<!--            <h2>Schedule Scripts:</h2>-->
+<!--            <div class="schedule-buttons">-->
+<!--                <div>-->
+<!--                    <label for="date">Select Date:</label>-->
+<!--                    <input type="date" id="date" name="date">-->
+<!--                </div>-->
+<!--                <div>-->
+<!--                    <label for="time">Select Time:</label>-->
+<!--                    <input type="time" id="time" name="time">-->
+<!--                </div>-->
+<!--                <div class="form-group">-->
+<!--    <label for="recurrence-start-date">Start Date:</label>-->
+<!--    <input type="date" id="recurrence-start-date" name="recurrence-start-date">-->
+<!--</div>-->
+<!--<div class="form-group">-->
+<!--    <label for="recurrence-start-time">Start Time:</label>-->
+<!--    <input type="time" id="recurrence-start-time" name="recurrence-start-time">-->
+<!--</div>-->
+<!--<div class="form-group">-->
+<!--    <label for="recurrence-frequency">Repeat:</label>-->
+<!--    <select id="recurrence-frequency" name="recurrence-frequency">-->
+<!--        <option value="monthly">Monthly</option>-->
+<!--        <option value="once">Once</option>-->
+<!--    </select>-->
+<!--</div>-->
+<!--<div class="form-group">-->
+<!--    <label for="recurrence-end-date">End Date:</label>-->
+<!--    <input type="date" id="recurrence-end-date" name="recurrence-end-date">-->
+<!--</div>-->
+<!--&lt;!&ndash;                <button id="recurrence-button" class="button" type="button">Set Recurrence</button>&ndash;&gt;-->
+<!--            </div>-->
+<!--1        <div class="schedule-date-time">-->
+<!--    <div class="form-group">-->
+<!--        <label for="start-date">Start Date:</label>-->
+<!--        <input type="date" id="start-date" name="start-date">-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label for="start-time">Start Time:</label>-->
+<!--        <input type="time" id="start-time" name="start-time">-->
+<!--    </div>-->
+<!--    <div class="form-group">-->
+<!--        <label for="recurrence-type">Repeat:</label>-->
+<!--        <select id="recurrence-type" name="recurrence-type">-->
+<!--            <option value="once">Once</option>-->
+<!--            <option value="monthly">Monthly</option>-->
+<!--        </select>-->
+<!--    </div>-->
+
+<!--</div>-->
+
+
+
+
+<!--            <div class="schedule-buttons">-->
+<!--                <button id="schedule-button" class="button" type="button">Schedule</button>-->
+<!--                <button id="stop-schedule-button" class="button" type="button">Stop Scheduling</button>-->
+<!--&lt;!&ndash;                <button id="recurrence-button" class="button" type="button">Set Recurrence</button>&ndash;&gt;-->
+<!--            </div>-->
+        </div>
+
+        <!-- Display scheduled task -->
+        <!-- Recurrence Popup -->
+        <!-- Recurrence Popup -->
+<!--<<div class="popup" id="recurrence-popup">-->
+<!--            <h3>Set Recurrence</h3>-->
+<!--            <div class="form-group">-->
+<!--                <label for="recurrence-start-date">Start Date:</label>-->
+<!--                <input type="date" id="recurrence-start-date" name="recurrence-start-date">-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="recurrence-start-time">Start Time:</label>-->
+<!--                <input type="time" id="recurrence-start-time" name="recurrence-start-time">-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="recurrence-frequency">Repeat:</label>-->
+<!--                <select id="recurrence-frequency" name="recurrence-frequency">-->
+<!--                    <option value="monthly">Monthly</option>-->
+<!--                </select>-->
+<!--            </div>-->
+<!--            <div class="form-group">-->
+<!--                <label for="recurrence-end-date">End Date:</label>-->
+<!--                <input type="date" id="recurrence-end-date" name="recurrence-end-date">-->
+<!--            </div>-->
+<!--            <div class="form-actions">-->
+<!--                <button class="cancel-button" type="button" onclick="toggleRecurrencePopup()">Cancel</button>-->
+<!--                <button class="save-button" type="button" id="save-recurrence-button">Save</button>-->
+<!--            </div>-->
+<!--        </div>-->
+
+
+        <div id="consoles"></div>
+    </div>
+
+    <script>
+    document.getElementById('stop-button').addEventListener('click', function() {
+    fetch('/stop_scripts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    }).then(response => response.json())
+        .then(data => {
+            console.log(data.status); // Optional: log the status
+            // Re-enable the run button and disable the stop button
+            document.getElementById('run-button').disabled = false;
+            document.getElementById('run-button').style.backgroundColor = '#28a745';
+            document.getElementById('stop-button').disabled = true;
+            document.getElementById('stop-button').style.backgroundColor = 'grey';
+            // Enable checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+        }).catch(error => {
+            console.error('Error stopping scripts:', error);
+        });
+});
+
+    document.getElementById('run-button').addEventListener('click', function() {
+        let formData = new FormData(document.getElementById('script-form'));
+
+        fetch('/run_scripts', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        }).then(response => response.json())
+            .then(data => {
+                let selectedScripts = formData.getAll('scripts');
+                let consolesDiv = document.getElementById('consoles');
+                consolesDiv.innerHTML = ''; // Clear previous consoles
+                selectedScripts.forEach(script => {
+                    let consoleDiv = document.createElement('div');
+                    consoleDiv.id = `console-${script}`;
+                    consoleDiv.className = 'console-box';
+                    consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: Running</p><p>URLs Scraped: 0</p>`;
+                    consolesDiv.appendChild(consoleDiv);
+                });
+                updateStatus();
+                // Disable the run button and enable the stop button
+                document.getElementById('run-button').disabled = true;
+                document.getElementById('run-button').style.backgroundColor = 'grey';
+                document.getElementById('stop-button').disabled = false;
+                document.getElementById('stop-button').style.backgroundColor = '#dc3545';
+                // Disable checkboxes only after the scripts have started running
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.disabled = true;
+                });
+            });
+    });
+
+    document.getElementById('schedule-button').addEventListener('click', function() {
+    let formData = new FormData(document.getElementById('script-form'));
+    let checkedScripts = document.querySelectorAll('input[name="scripts"]:checked');
+
+    if (checkedScripts.length > 0) {
+        checkedScripts.forEach(script => {
+            formData.append('scripts', script.value);
+        });
+        const startDate = document.getElementById('start-date').value;
+        const startTime = document.getElementById('start-time').value;
+        const recurrenceType = document.getElementById('recurrence-type').value;
+
+        formData.append('start-date', startDate);
+        formData.append('start-time', startTime);
+        formData.append('recurrence-type', recurrenceType);
+
+        fetch('/schedule_scripts', {
+            method: 'POST',
+            body: formData
+        }).then(response => response.json())
+        .then(data => {
+            console.log(data.status);
+            displayScheduledTask(data.status);
+            document.getElementById('run-button').disabled = true;
+            document.getElementById('run-button').style.backgroundColor = 'grey';
+        }).catch(error => {
+            console.error('Error scheduling script:', error);
+            alert('An error occurred while scheduling the script. Please try again.');
+        });
+    } else {
+        alert('Please select a script to schedule.');
+    }
+});
+
+
+
+
+    // Toggle the visibility of the schedule section
+    document.getElementById('toggle-schedule-button').addEventListener('click', function() {
+    const scheduleSection = document.getElementById('schedule-section');
+    const toggleButton = document.getElementById('toggle-schedule-button');
+
+    if (scheduleSection.style.display === 'none') {
+        scheduleSection.style.display = 'block'; // Show the schedule section
+        toggleButton.textContent = 'Hide Schedule Options';
+        toggleButton.classList.remove('collapsed');
+    } else {
+        scheduleSection.style.display = 'none'; // Hide the schedule section
+        toggleButton.textContent = 'Show Schedule Options';
+        toggleButton.classList.add('collapsed');
+    }
+});
+
+// Add this to ensure the schedule section is hidden when the page loads
+window.addEventListener('DOMContentLoaded', function() {
+    const scheduleSection = document.getElementById('schedule-section');
+    const toggleButton = document.getElementById('toggle-schedule-button');
+
+    scheduleSection.style.display = 'none';
+    toggleButton.textContent = 'Show Schedule Options';
+    toggleButton.classList.add('collapsed');
+});
+
+    // Function to display the scheduled task
+    function displayScheduledTask(status) {
+    let scheduledTaskInfo = document.getElementById('scheduled-task-info');
+    scheduledTaskInfo.textContent = `Scheduled Task: ${status}`;
+    document.getElementById('scheduled-task-display').style.display = 'block'; // Show the scheduled task display
+    document.getElementById('run-button').disabled = true; // Disable the run button
+}
+
+    // Function to update the status of running scripts
+    function updateStatus() {
+        fetch('/status')
+            .then(response => response.json())
+            .then(data => {
+                let consolesDiv = document.getElementById('consoles');
+                Object.keys(data).forEach(scriptName => {
+                    let consoleDiv = document.getElementById(`console-${scriptName}`);
+                    if (consoleDiv) {
+                        consoleDiv.innerHTML = `<h3>${scriptName}</h3><p>Status: ${data[scriptName]}</p>`;
+                    } else {
+                        consoleDiv = document.createElement('div');
+                        consoleDiv.id = `console-${scriptName}`;
+                        consoleDiv.className = 'console-box';
+                        consoleDiv.innerHTML = `<h3>${scriptName}</h3><p>Status: ${data[scriptName]}</p>`;
+                        consolesDiv.appendChild(consoleDiv);
+                    }
+                });
+                setTimeout(updateStatus, 1000); // Update every second
+            });
+    }
+
+    // Call the updateStatus function initially to start updating the status
+    updateStatus();
+        document.getElementById('stop-schedule-button').addEventListener('click', function() {
+    fetch('/stop_scheduled_scripts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+<!--    .then(response => response.json())-->
+    .then(response => {
+        console.log('Response received:', response);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Data received:', data);
+        // Clear the scheduled task display
+        document.getElementById('scheduled-task-info').textContent = '';
+        document.getElementById('scheduled-task-display').style.display = 'none';
+        // Re-enable the run button
+        document.getElementById('run-button').disabled = false;
+        document.getElementById('run-button').style.backgroundColor = '#28a745';
+        // Clear the date and time inputs
+        document.getElementById('start-date').value = '';
+        document.getElementById('start-time').value = '';
+        // Reset the recurrence type
+        document.getElementById('recurrence-type').value = 'once';
+        alert('All scheduled tasks have been stopped.');
+    })
+    .catch(error => {
+        console.error('Error stopping scheduled scripts:', error);
+        alert('An error occurred while stopping the scheduled scripts. Please try again.');
+    });
+});
+
+        function toggleRecurrencePopup() {
+            const popup = document.getElementById('recurrence-popup');
+            popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+        }
+
+        document.getElementById('recurrence-type').addEventListener('change', function() {
+        const endDateGroup = document.getElementById('end-date-group');
+        if (this.value === 'monthly') {
+            endDateGroup.style.display = 'block';
+        } else {
+            endDateGroup.style.display = 'none';
+        }
+    });
+
+        document.getElementById('recurrence-button').addEventListener('click', toggleRecurrencePopup);
+
+        document.getElementById('save-recurrence-button').addEventListener('click', function() {
+    // Save the recurrence settings and close the popup
+    const startDate = document.getElementById('recurrence-start-date').value;
+    const startTime = document.getElementById('recurrence-start-time').value;
+    const frequency = document.getElementById('recurrence-frequency').value;
+    const endDate = document.getElementById('recurrence-end-date').value;
+
+    const recurrenceSettings = `${frequency}|${endDate}|${startTime}`;
+
+    const formData = new FormData(document.getElementById('script-form'));
+    formData.append('recurrence_settings', recurrenceSettings);
+
+    fetch('/schedule_scripts', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data.status);
+                document.getElementById('date').value = '';
+                document.getElementById('time').value = '';
+                displayScheduledTask(data.status);
+                document.getElementById('run-button').disabled = true;
+                document.getElementById('run-button').style.backgroundColor = 'grey';
+                toggleRecurrencePopup(); // Close the recurrence popup
+            })
+            .catch(error => {
+                console.error('Error scheduling script:', error);
+                alert('An error occurred while scheduling the script. Please try again.');
+            });
+
+    // You can process the recurrence settings here, for now we just log them
+    console.log('Recurrence Settings:', { startDate, frequency, endDate });
+
+    // Close the popup
+    toggleRecurrencePopup();
+
+    // Display scheduled task in UI
+    const scheduledTaskInfo = document.getElementById('scheduled-task-info');
+    const selectedScripts = Array.from(document.querySelectorAll('input[name="scripts"]:checked')).map(script => script.value);
+    scheduledTaskInfo.textContent = `Scheduled Task: Scheduled ${selectedScripts} for ${startDate} at ${frequency}`;
+    document.getElementById('scheduled-task-display').style.display = 'block';
+});
+
+        window.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.getElementById('toggle-schedule-button');
+    toggleButton.textContent = 'Show Schedule Options';
+    toggleButton.classList.add('collapsed');
+});
+
+    </script>
+</body>
+</html>

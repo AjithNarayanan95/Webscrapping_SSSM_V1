@@ -1,0 +1,139 @@
+h1 {
+
+    color: #009965; /* Change the color to a green shade */
+    font-weight: bold; /* Make the heading bold */
+    font-size: 55px;
+}
+
+body {
+    background-image: url('/static/rm222batch3-mind-06.jpg'); /* Adjust the path as necessary */
+    background-size: cover;
+    background-repeat: no-repeat;
+    font-family: Arial, sans-serif; /* Specify font family */
+}
+
+.container {
+    padding: 20px;
+    margin: 0 auto;
+    width: 80%;
+    background-color: rgba(255, 255, 255, 0.8); /* White background with opacity */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.nav-container {
+    background-color: #0066cc; /* Dark blue background color */
+    border-radius: 15px; /* Rounded corners */
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.nav-links {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+.nav-links li {
+    display: inline;
+    margin-right: 20px;
+}
+
+.nav-links li a {
+    color: #ffffff; /* White text color */
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 10px;
+}
+
+.nav-links li a:hover {
+    background-color: #0055cc; /* Darker blue background color on hover */
+    border-radius: 10px; /* Rounded corners on hover */
+}
+
+
+.script-container {
+    background-color: #e6f7ff !important; /* Light blue background color */
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Flex container for the date and time inputs */
+.flex-container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.flex-container .form-group {
+    flex: 1; /* Allow flex items to grow and fill available space */
+    min-width: 200px; /* Minimum width for form groups */
+}
+
+/* Adjust the width of input fields */
+.flex-container input,
+.flex-container select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+
+
+/* Adjustments for script labels */
+label {
+    font-weight: bold;
+    color: #003399; /* Dark blue font color */
+    text-transform: capitalize; /* Capitalize script names */
+}
+
+button {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#consoles {
+    margin-top: 20px;
+}
+
+.console-box {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.console-box h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.console-box p {
+    margin: 5px 0;
+    color: #666;
+}
+
+.console-box.completed {
+    background-color: #dff0d8;
+}
+
+.console-box.failed {
+    background-color: #f2dede;
+}
