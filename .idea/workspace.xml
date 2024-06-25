@@ -4,25 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Webscrapping- Webpage.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/Carolina_Products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/Fisher_Products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/Flinn_products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/Frey Products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/Nasco_Products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/VWR_WARDS_Products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Scrapping Scripts/wardsci_products.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups2/app2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups2/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups2/scheduler.py" afterDir="false" />
-    </list>
+    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="Added all the scripts with WebUI integration" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -216,6 +198,19 @@
       <option name="presentableId" value="Default" />
       <updated>1718089997892</updated>
     </task>
+    <task id="LOCAL-00001" summary="Added all the scripts with WebUI integration">
+      <option name="closed" value="true" />
+      <created>1719308709298</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1719308709298</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Added all the scripts with WebUI integration" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added all the scripts with WebUI integration" />
   </component>
 </project>
