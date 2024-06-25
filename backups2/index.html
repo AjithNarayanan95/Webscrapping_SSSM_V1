@@ -344,6 +344,8 @@
             console.log(data.status);
             document.getElementById('run-button').disabled = false;
             document.getElementById('stop-button').disabled = true;
+            document.getElementById('schedule-button').disabled = false;
+            document.getElementById('stop-schedule-button').disabled = false;
             updateButtonColors();
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.disabled = false;
@@ -377,6 +379,8 @@
             updateStatus();
             document.getElementById('run-button').disabled = true;
             document.getElementById('stop-button').disabled = false;
+            document.getElementById('schedule-button').disabled = true;
+            document.getElementById('stop-schedule-button').disabled = true;
             updateButtonColors();
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.disabled = true;
@@ -410,7 +414,12 @@
                 displayScheduledTask(data.status);
                 document.getElementById('run-button').disabled = true;
                 document.getElementById('run-button').style.backgroundColor = 'grey';
+                document.getElementById('stop-button').disabled = true;
+                document.getElementById('schedule-button').disabled = true;
+                document.getElementById('stop-schedule-button').disabled = false;
+                updateButtonColors();
                 saveState();
+                window.stop_execution = false;
             } else {
                 console.error('Scheduling error:', data.status);
                 alert('Error scheduling script: ' + data.status);
@@ -440,18 +449,7 @@
         }
     });
 
-    window.addEventListener('DOMContentLoaded', function() {
-    loadState().then(() => {
-        const scheduleSection = document.getElementById('schedule-section');
-        const toggleButton = document.getElementById('toggle-schedule-button');
 
-        scheduleSection.style.display = 'none';
-        toggleButton.textContent = 'Show Schedule Options';
-        toggleButton.classList.add('collapsed');
-    }).catch(error => {
-        console.error('Error loading state:', error);
-    });
-});
 
     function displayScheduledTask(status) {
         let scheduledTaskInfo = document.getElementById('scheduled-task-info');
@@ -485,34 +483,60 @@
     updateStatus();
 
     document.getElementById('stop-schedule-button').addEventListener('click', function() {
-        fetch('/stop_scheduled_scripts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({})
-        })
-        .then(response => {
-            console.log('Response received:', response);
-            return response.json();
-        })
+    fetch('/stop_all', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data.status);
+        document.getElementById('scheduled-task-info').textContent = '';
+        document.getElementById('scheduled-task-display').style.display = 'none';
+<!--        document.getElementById('run-button').disabled = false;-->
+<!--        document.getElementById('stop-button').disabled = true;-->
+<!--        document.getElementById('schedule-button').disabled = false;-->
+<!--        document.getElementById('stop-schedule-button').disabled = true;-->
+            pollStatus();
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.disabled = false;
+        });
+        updateButtonColors();
+        saveState();
+        alert('All scheduled tasks and running scripts have been stopped.');
+    })
+    .catch(error => {
+        console.error('Error stopping all tasks and scripts:', error);
+        alert('An error occurred while stopping tasks and scripts. Please try again.');
+    });
+});
+
+function pollStatus() {
+    fetch('/status')
+        .then(response => response.json())
         .then(data => {
-            console.log('Data received:', data);
-            document.getElementById('scheduled-task-info').textContent = '';
-            document.getElementById('scheduled-task-display').style.display = 'none';
-            document.getElementById('run-button').disabled = false;
-            document.getElementById('run-button').style.backgroundColor = '#28a745';
-            document.getElementById('start-date').value = '';
-            document.getElementById('start-time').value = '';
-            document.getElementById('recurrence-type').value = 'once';
-            alert('All scheduled tasks have been stopped.');
+            const anyRunning = Object.values(data).some(status => status === 'Running' || status === 'Stopping');
+            if (!anyRunning) {
+                document.getElementById('run-button').disabled = false;
+                document.getElementById('stop-button').disabled = true;
+                document.getElementById('schedule-button').disabled = false;
+                document.getElementById('stop-schedule-button').disabled = true;
+                updateButtonColors();
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.disabled = false;
+                });
+                saveState();
+            } else {
+                // Continue polling if any scripts are still running
+                setTimeout(pollStatus, 1000);
+            }
         })
         .catch(error => {
-            console.error('Error stopping scheduled scripts:', error);
-            alert('An error occurred while stopping the scheduled scripts. Please try again.');
+            console.error('Error polling status:', error);
         });
-         saveState();
-    });
+}
 <!--    function saveState() {-->
 <!--    const checkboxes = document.querySelectorAll('input[type="checkbox"]');-->
 <!--    const state = {-->
@@ -529,9 +553,11 @@
 function saveState() {
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     const state = {
-        checkboxes: Array.from(checkboxes).map(cb => ({ id: cb.id, checked: cb.checked })),
+        checkboxes: Array.from(document.querySelectorAll('input[type="checkbox"]')).map(cb => ({ id: cb.id, checked: cb.checked })),
         runButtonDisabled: document.getElementById('run-button').disabled,
         stopButtonDisabled: document.getElementById('stop-button').disabled,
+        scheduleButtonDisabled: document.getElementById('schedule-button').disabled,
+        stopScheduleButtonDisabled: document.getElementById('stop-schedule-button').disabled,
         startDate: document.getElementById('start-date').value,
         startTime: document.getElementById('start-time').value,
         recurrenceType: document.getElementById('recurrence-type').value,
@@ -626,21 +652,24 @@ function loadState() {
         if (savedState) {
             const state = JSON.parse(savedState);
 
-            // Restore checkboxes
+            // Restore checkboxes and other inputs
             state.checkboxes.forEach(cb => {
                 const checkbox = document.getElementById(cb.id);
                 if (checkbox) checkbox.checked = cb.checked;
             });
-
-            // Restore schedule inputs
             document.getElementById('start-date').value = state.startDate;
             document.getElementById('start-time').value = state.startTime;
             document.getElementById('recurrence-type').value = state.recurrenceType;
 
-            // Restore button states from saved state
+            // Restore button states
             document.getElementById('run-button').disabled = state.runButtonDisabled;
             document.getElementById('stop-button').disabled = state.stopButtonDisabled;
-            updateButtonColors();
+            document.getElementById('schedule-button').disabled = state.scheduleButtonDisabled;
+            document.getElementById('stop-schedule-button').disabled = state.stopScheduleButtonDisabled;
+
+            // Restore scheduled task display
+            document.getElementById('scheduled-task-display').style.display = state.scheduledTaskDisplay;
+            document.getElementById('scheduled-task-info').textContent = state.scheduledTaskInfo;
         }
 
         // Check server status to ensure UI is in sync
@@ -650,6 +679,8 @@ function loadState() {
                 if (runningData.any_running) {
                     document.getElementById('run-button').disabled = true;
                     document.getElementById('stop-button').disabled = false;
+                    document.getElementById('schedule-button').disabled = true;
+                    document.getElementById('stop-schedule-button').disabled = true;
                 } else {
                     return fetch('/get_scheduling_status');
                 }
@@ -663,7 +694,9 @@ function loadState() {
                     document.getElementById('scheduled-task-info').textContent = tasksInfo;
                     document.getElementById('scheduled-task-display').style.display = 'block';
                     document.getElementById('run-button').disabled = true;
-                    document.getElementById('stop-button').disabled = false;
+                    document.getElementById('stop-button').disabled = true;
+                    document.getElementById('schedule-button').disabled = true;
+                    document.getElementById('stop-schedule-button').disabled = false;
                 }
                 updateButtonColors();
                 resolve();
@@ -686,8 +719,11 @@ function loadState() {
 <!--}-->
 
 function updateButtonColors() {
-    document.getElementById('run-button').style.backgroundColor = document.getElementById('run-button').disabled ? 'grey' : '#15a65e';
-    document.getElementById('stop-button').style.backgroundColor = document.getElementById('stop-button').disabled ? 'grey' : '#15a65e';
+    const buttons = ['run-button', 'stop-button', 'schedule-button', 'stop-schedule-button'];
+    buttons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        button.style.backgroundColor = button.disabled ? 'grey' : '#15a65e';
+    });
 }
 
     function setDefaultDateTime() {
@@ -704,6 +740,19 @@ function updateButtonColors() {
         const minutes = now.getMinutes().toString().padStart(2, '0');
         document.getElementById('start-time').value = `${hours}:${minutes}`;
     }
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadState().then(() => {
+        const scheduleSection = document.getElementById('schedule-section');
+        const toggleButton = document.getElementById('toggle-schedule-button');
+
+        scheduleSection.style.display = 'none';
+        toggleButton.textContent = 'Show Schedule Options';
+        toggleButton.classList.add('collapsed');
+    }).catch(error => {
+        console.error('Error loading state:', error);
+    });
+});
 
     // Call the function when the page loads
 <!--    window.addEventListener('DOMContentLoaded', setDefaultDateTime);-->

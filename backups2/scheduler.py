@@ -16,7 +16,12 @@ def schedule_task(script_name, start_date, start_time, run_script):
             logging.error(f"Scheduled time {start_date} {start_time} is in the past.")
             return jsonify({'status': f'Error: Scheduled time {start_date} {start_time} is in the past'}), 400
 
-        t = Timer(delay, run_script, args=(script_name,))
+        def scheduled_run():
+            global stop_execution
+            stop_execution = False  # Reset stop_execution before running the scheduled script
+            run_script(script_name)
+
+        t = Timer(delay, scheduled_run)
         t.start()
 
         task = {

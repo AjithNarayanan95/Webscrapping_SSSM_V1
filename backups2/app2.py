@@ -26,41 +26,46 @@ signal.signal(signal.SIGINT, stop_execution_handler)
 
 
 def run_script(script_name):
-    global stop_execution
+    global stop_execution, script_status
     script_path = os.path.join(SCRIPTS_DIRECTORY, script_name)
     script_status[script_name] = 'Running'
-    script_stopped = False
     try:
         logging.debug(f"Starting script: {script_name}")
         process = subprocess.Popen(['python', script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    universal_newlines=True)
 
         while True:
-            if stop_execution:
+            if stop_execution or script_status[script_name] == 'Stopping':
                 logging.debug(f"Stopping script: {script_name}")
-                script_status[script_name] = 'Stopping'
                 process.terminate()
-                script_stopped = True
+                process.wait(timeout=5)  # Wait for up to 5 seconds for the process to terminate
+                if process.poll() is None:
+                    process.kill()  # Force kill if it doesn't terminate
+                script_status[script_name] = 'Stopped'
                 break
-            output = process.stdout.readline()
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                logging.debug(f'Script {script_name} output: {output.strip()}')
-                script_output[script_name] = script_output.get(script_name, '') + output
+            try:
+                output = process.stdout.readline()
+                if output == '' and process.poll() is not None:
+                    break
+                if output:
+                    logging.debug(f'Script {script_name} output: {output.strip()}')
+                    script_output[script_name] = script_output.get(script_name, '') + output
+            except subprocess.TimeoutExpired:
+                continue
 
         stdout, stderr = process.communicate()
         script_output[script_name] = script_output.get(script_name, '') + stdout + stderr
         rc = process.poll()
 
-        if not script_stopped:
+        if script_status[script_name] != 'Stopped':
             script_status[script_name] = 'Completed' if rc == 0 else f'Error: {stderr.strip()}'
-        else:
-            script_status[script_name] = 'Stopped'
 
     except Exception as e:
         logging.error(f"Exception running script {script_name}: {e}")
         script_status[script_name] = f'Error: {str(e)}'
+    finally:
+        if script_name in script_status and script_status[script_name] == 'Running':
+            script_status[script_name] = 'Completed'
 
 UNWANTED_SCRIPTS = ['module_package.py']
 @app.route('/')
@@ -100,11 +105,13 @@ def update_task_status(script_name, status):
 @app.route('/stop_scripts', methods=['POST'])
 def stop_scripts():
     try:
-        global stop_execution
+        global stop_execution, script_status
         stop_execution = True
-        for task in scheduled_tasks:
-            task['status'] = 'Stopped'
-        return jsonify({'status': 'Stopping scripts...'})
+        # Terminate all running scripts
+        for script_name, status in script_status.items():
+            if status == 'Running':
+                script_status[script_name] = 'Stopping'
+        return jsonify({'status': 'Stopping all running scripts...'})
     except Exception as e:
         logging.error(f"Error stopping scripts: {str(e)}")
         return jsonify({'status': f'Error stopping scripts: {str(e)}'}), 500
@@ -121,13 +128,15 @@ def status():
 
 @app.route('/schedule_scripts', methods=['POST'])
 def schedule_scripts():
+    global stop_execution
     try:
+        stop_execution = False  # Reset the stop_execution flag when scheduling
         scripts = request.form.getlist('scripts')
         start_date = request.form.get('start-date')
         start_time = request.form.get('start-time')
         recurrence_type = request.form.get('recurrence-type')
 
-        unique_scripts = list(set(scripts))  # Remove duplicates
+        unique_scripts = list(set(scripts))
         scheduled_scripts = []
 
         for script in unique_scripts:
@@ -175,6 +184,27 @@ def reset_state():
     script_status = {}
     script_output = {}
     return jsonify({'status': 'State reset successfully'})
+
+
+@app.route('/stop_all', methods=['POST'])
+def stop_all():
+    global stop_execution, script_status, scheduled_tasks
+    try:
+        # Stop all running scripts
+        stop_execution = True
+        for script_name in script_status:
+            script_status[script_name] = 'Stopped'
+
+        # Stop all scheduled tasks
+        stop_scheduled_task()
+
+        # Clear scheduled tasks
+        scheduled_tasks.clear()
+
+        return jsonify({'status': 'All scheduled tasks and running scripts have been stopped.'})
+    except Exception as e:
+        return jsonify({'status': f'Error stopping all tasks and scripts: {str(e)}'}), 500
+
 
 @app.route('/get_scheduling_status', methods=['GET'])
 def get_scheduling_status():
