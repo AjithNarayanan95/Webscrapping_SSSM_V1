@@ -262,6 +262,65 @@
     height: 150px; /* Adjust this value as needed */
 <!--    object-fit: contain; /* This ensures the image is scaled properly within the dimensions */-->
 }
+        .scripts-container {
+    background-color: #f1f9fd;
+    padding: 20px;
+    border-radius: 10px;
+    color: #334376;
+    margin-bottom: 20px;
+}
+
+.schedule-content {
+
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.schedule-date-time {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.schedule-date-time .form-group {
+    width: 30%;
+    margin-bottom: 10px;
+}
+
+.schedule-date-time label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.schedule-date-time input,
+.schedule-date-time select {
+    width: 100%;
+    padding: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.schedule-buttons {
+    display: flex;
+    justify-content: space-between;
+}
+
+.schedule-buttons .button {
+
+    height: 35px;
+    font-size: 16px;
+    padding: 5px;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    background-color: #15a65e;
+}
+
+#toggle-schedule-button {
+    margin-bottom: 20px;
+}
     </style>
 </head>
 <body>
@@ -304,31 +363,36 @@
             <p id="scheduled-task-info"></p>
         </div>
         <button id="toggle-schedule-button" class="toggle-button collapsed" type="button">Show Schedule Options</button>
-        <div id="schedule-section" style="display: none;">
-            <h2>Schedule Scripts:</h2>
-            <div class="schedule-date-time">
-                <div class="form-group">
-                    <label for="start-date">Start Date:</label>
-                    <input type="date" id="start-date" name="start-date">
-                </div>
-                <div class="form-group">
-                    <label for="start-time">Start Time:</label>
-                    <input type="time" id="start-time" name="start-time">
-                </div>
-                <div class="form-group">
-                    <label for="recurrence-type">Repeat:</label>
-                    <select id="recurrence-type" name="recurrence-type" class="repeat-dropdown">
-                        <option value="once">Once</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
+        <div class="scripts-container" id="schedule-section" style="display: none;">
+    <h2>Schedule Scripts:</h2>
+    <div class="schedule-content">
+        <div class="schedule-date-time">
+            <div class="form-group">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date" name="start-date">
             </div>
-            <div class="schedule-buttons">
-                <button id="schedule-button" class="button" type="button">Schedule</button>
-                <button id="stop-schedule-button" class="button" type="button">Stop Scheduling</button>
+            <div class="form-group">
+                <label for="start-time">Start Time:</label>
+                <input type="time" id="start-time" name="start-time">
+            </div>
+            <div class="form-group">
+                <label for="recurrence-type">Repeat:</label>
+                <select id="recurrence-type" name="recurrence-type" class="repeat-dropdown">
+                    <option value="once">Once</option>
+                    <option value="monthly">Monthly</option>
+                </select>
             </div>
         </div>
-        <div id="consoles"></div>
+        <div class="schedule-buttons">
+            <button id="schedule-button" class="button" type="button">Schedule</button>
+            <button id="stop-schedule-button" class="button" type="button">Stop Scheduling</button>
+        </div>
+    </div>
+</div>
+        <div id="consoles-container" class="scripts-container">
+    <h2>Console Output:</h2>
+    <div id="consoles"></div>
+</div>
     </div>
 
     <script>
@@ -345,7 +409,7 @@
             document.getElementById('run-button').disabled = false;
             document.getElementById('stop-button').disabled = true;
             document.getElementById('schedule-button').disabled = false;
-            document.getElementById('stop-schedule-button').disabled = false;
+            document.getElementById('stop-schedule-button').disabled = true;
             updateButtonColors();
             document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                 checkbox.disabled = false;
@@ -417,6 +481,9 @@
                 document.getElementById('stop-button').disabled = true;
                 document.getElementById('schedule-button').disabled = true;
                 document.getElementById('stop-schedule-button').disabled = false;
+                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.disabled = true;
+            });
                 updateButtonColors();
                 saveState();
                 window.stop_execution = false;
@@ -435,19 +502,19 @@
 });
 
     document.getElementById('toggle-schedule-button').addEventListener('click', function() {
-        const scheduleSection = document.getElementById('schedule-section');
-        const toggleButton = document.getElementById('toggle-schedule-button');
+    const scheduleSection = document.getElementById('schedule-section');
+    const toggleButton = document.getElementById('toggle-schedule-button');
 
-        if (scheduleSection.style.display === 'none') {
-            scheduleSection.style.display = 'block';
-            toggleButton.textContent = 'Hide Schedule Options';
-            toggleButton.classList.remove('collapsed');
-        } else {
-            scheduleSection.style.display = 'none';
-            toggleButton.textContent = 'Show Schedule Options';
-            toggleButton.classList.add('collapsed');
-        }
-    });
+    if (scheduleSection.style.display === 'none') {
+        scheduleSection.style.display = 'block';
+        toggleButton.textContent = 'Hide Schedule Options';
+        toggleButton.classList.remove('collapsed');
+    } else {
+        scheduleSection.style.display = 'none';
+        toggleButton.textContent = 'Show Schedule Options';
+        toggleButton.classList.add('collapsed');
+    }
+});
 
 
 

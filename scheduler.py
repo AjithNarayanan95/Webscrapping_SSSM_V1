@@ -109,4 +109,9 @@ def schedule_monthly_task(script_name, start_date, start_time, run_script):
 
 
 def get_scheduled_tasks():
-    return scheduled_tasks
+    return [{
+        'script_name': task['script_name'],
+        'run_date': task['run_date'],
+        'run_time': task['run_time'],
+        'status': 'Scheduled'
+    } for task in scheduled_tasks]

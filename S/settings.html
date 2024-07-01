@@ -1,0 +1,745 @@
+<!--&lt;!&ndash; settings.html &ndash;&gt;-->
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>P.E.T.e</title>-->
+<!--    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">-->
+<!--    <style>-->
+<!--        body {-->
+<!--        background-image: url('/static/5655049.jpg');-->
+<!--        background-size: cover;-->
+<!--        background-repeat: no-repeat;-->
+<!--    }-->
+<!--    .container {-->
+<!--        padding: 20px;-->
+<!--        margin: 0 auto;-->
+<!--        width: 80%;-->
+<!--        background-color: rgba(255, 255, 255, 0.8);-->
+<!--        border-radius: 10px;-->
+<!--        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);-->
+<!--        font-family: Arial, sans-serif;-->
+<!--    }-->
+<!--    .nav-container {-->
+<!--        background-color: #334376;-->
+<!--        border-radius: 15px;-->
+<!--        padding: 10px;-->
+<!--        margin-bottom: 20px;-->
+<!--    }-->
+<!--    .nav-links {-->
+<!--        list-style-type: none;-->
+<!--        padding: 0;-->
+<!--        margin: 0;-->
+<!--        text-align: center;-->
+<!--    }-->
+<!--    .nav-links li {-->
+<!--        display: inline;-->
+<!--        margin-right: 20px;-->
+<!--    }-->
+<!--    .nav-links li a {-->
+<!--        color: #ffffff;-->
+<!--        text-decoration: none;-->
+<!--        font-size: 18px;-->
+<!--        font-weight: bold;-->
+<!--        padding: 10px;-->
+<!--    }-->
+<!--    .nav-links li a:hover {-->
+<!--        background-color: #0055cc;-->
+<!--        border-radius: 10px;-->
+<!--    }-->
+<!--    .scripts-container {-->
+<!--        background-color: #f1f9fd;-->
+<!--        padding: 20px;-->
+<!--        border-radius: 10px;-->
+<!--        color: #334376;-->
+<!--    }-->
+<!--    label {-->
+<!--        font-weight: bold;-->
+<!--        font-size: 20px;-->
+<!--        color: #334376;-->
+<!--        text-transform: capitalize;-->
+<!--    }-->
+<!--    .script-row {-->
+<!--        display: flex;-->
+<!--        flex-wrap: wrap;-->
+<!--        justify-content: space-between;-->
+<!--    }-->
+<!--    .script-container {-->
+<!--        display: flex;-->
+<!--        align-items: center;-->
+<!--        text-align: center;-->
+<!--        background-color: rgba(0, 138, 83, 0.25) !important;-->
+<!--        padding: 10px !important;-->
+<!--        gap: 10px;-->
+<!--        width: 30%;-->
+<!--        margin-bottom: 20px;-->
+<!--    }-->
+<!--    .button-container {-->
+<!--        margin-top: 20px;-->
+<!--        display: flex;-->
+<!--        justify-content: space-between;-->
+<!--    }-->
+<!--    .button {-->
+<!--        width: 200px;-->
+<!--        height: 35px;-->
+<!--        font-size: 16px;-->
+<!--        padding: 10px;-->
+<!--        border: none;-->
+<!--        border-radius: 25px;-->
+<!--        color: white;-->
+<!--    }-->
+<!--    .run-button {-->
+<!--        background-color: #15a65e;-->
+<!--    }-->
+<!--    .stop-button {-->
+<!--        background-color: grey;-->
+<!--    }-->
+<!--    .stop-button:disabled {-->
+<!--        background-color: grey;-->
+<!--    }-->
+<!--    input[type="checkbox"] {-->
+<!--        margin-left: 70px;-->
+<!--        width: 20px;-->
+<!--        height: 20px;-->
+<!--        transform: scale(.7);-->
+<!--        margin-right: 1px;-->
+<!--    }-->
+<!--    .schedule-section {-->
+<!--        background-color: rgba(4, 10, 122, 0.11);-->
+<!--        display: none;-->
+<!--        padding: 20px;-->
+<!--        border-radius: 10px;-->
+<!--        margin-top: 20px;-->
+<!--        color: #ffffff;-->
+<!--    }-->
+<!--    input[type="text"],-->
+<!--    input[type="password"] {-->
+<!--        width: 300px;-->
+<!--        height: 40px;-->
+<!--        font-size: 18px;-->
+<!--        padding: 5px;-->
+<!--        border-radius: 5px;-->
+<!--        border: 1px solid #ccc;-->
+<!--        margin-bottom: 10px;-->
+<!--    }-->
+<!--    .schedule-buttons {-->
+<!--        display: flex;-->
+<!--        justify-content: space-between;-->
+<!--        margin-top: 10px;-->
+<!--    }-->
+<!--    .schedule-buttons .button {-->
+<!--        width: 250px%;-->
+<!--        background-color: #15a65e-->
+<!--    }-->
+<!--    .toggle-button {-->
+<!--        background-color: #15a65e;-->
+<!--        color: white;-->
+<!--        border: none;-->
+<!--        padding: 10px 20px;-->
+<!--        border-radius: 25px;-->
+<!--        cursor: pointer;-->
+<!--        font-size: 16px;-->
+<!--        margin-bottom: 20px;-->
+<!--    }-->
+<!--    .toggle-button.collapsed {-->
+<!--        background-color: #6c757d;-->
+<!--    }-->
+<!--    .scheduled-task {-->
+<!--        background-color: rgba(0, 138, 83, 0.25);-->
+<!--        padding: 10px;-->
+<!--        border-radius: 5px;-->
+<!--        margin-top: 20px;-->
+<!--    }-->
+<!--    .popup {-->
+<!--        display: none;-->
+<!--        position: fixed;-->
+<!--        top: 50%;-->
+<!--        left: 50%;-->
+<!--        transform: translate(-50%, -50%);-->
+<!--        width: 400px;-->
+<!--        padding: 20px;-->
+<!--        background-color: white;-->
+<!--        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);-->
+<!--        z-index: 1000;-->
+<!--        border-radius: 10px;-->
+<!--    }-->
+<!--    .popup h3 {-->
+<!--        margin-top: 0;-->
+<!--    }-->
+<!--    .popup .form-group {-->
+<!--        margin-bottom: 15px;-->
+<!--    }-->
+<!--    .popup .form-group label {-->
+<!--        display: block;-->
+<!--        font-weight: bold;-->
+<!--        margin-bottom: 5px;-->
+<!--    }-->
+<!--    .popup .form-group input[type="date"],-->
+<!--    .popup .form-group input[type="time"],-->
+<!--    .popup .form-group select {-->
+<!--        width: 100%;-->
+<!--        padding: 5px;-->
+<!--        font-size: 16px;-->
+<!--        border-radius: 5px;-->
+<!--        border: 1px solid #ccc;-->
+<!--    }-->
+<!--    .popup .form-actions {-->
+<!--        text-align: right;-->
+<!--    }-->
+<!--    .popup .form-actions button {-->
+<!--        padding: 10px 20px;-->
+<!--        border: none;-->
+<!--        border-radius: 5px;-->
+<!--        font-size: 16px;-->
+<!--    }-->
+<!--    .popup .form-actions .cancel-button {-->
+<!--        background-color: grey;-->
+<!--        color: white;-->
+<!--        margin-right: 10px;-->
+<!--    }-->
+<!--    .popup .form-actions .save-button {-->
+<!--        background-color: #28a745;-->
+<!--        color: white;-->
+<!--    }-->
+<!--    .UserName {-->
+<!--        display: flex;-->
+<!--        flex-wrap: wrap;-->
+<!--        gap: 20px;-->
+<!--    }-->
+<!--    .UserName .form-group {-->
+<!--        flex: 1;-->
+<!--        min-width: 200px;-->
+<!--    }-->
+<!--    .UserName input,-->
+<!--    .UserName select {-->
+<!--        width: 100%;-->
+<!--        font-size: 16px;-->
+<!--        border-radius: 5px;-->
+<!--        border: 1px solid #ccc;-->
+<!--    }-->
+<!--    .logo {-->
+<!--        width: 150px;-->
+<!--        height: auto;-->
+<!--        display: block;-->
+<!--    }-->
+<!--    .header {-->
+<!--        display: flex;-->
+<!--        align-items: center;-->
+<!--        justify-content: space-between;-->
+<!--&lt;!&ndash;        padding: 1px;&ndash;&gt;-->
+<!--    }-->
+<!--    h1 {-->
+<!--        text-align: center;-->
+<!--        margin: 0;-->
+<!--        font-family: 'Anton';-->
+<!--    }-->
+<!--    .repeat-dropdown {-->
+<!--        width: 150px;-->
+<!--        height: 50px;-->
+<!--        font-size: 16px;-->
+<!--        padding: 5px 10px;-->
+<!--        border-radius: 5px;-->
+<!--        border: 1px solid #ccc;-->
+<!--    }-->
+<!--    .repeat-dropdown::-ms-expand {-->
+<!--        display: none;-->
+<!--    }-->
+<!--    .repeat-dropdown:focus {-->
+<!--        outline: none;-->
+<!--        border-color: #007bff;-->
+<!--    }-->
+<!--    .repeat-dropdown {-->
+<!--        appearance: none;-->
+<!--        -webkit-appearance: none;-->
+<!--        -moz-appearance: none;-->
+<!--        background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");-->
+<!--        background-repeat: no-repeat;-->
+<!--        background-position-x: calc(100% - 10px);-->
+<!--        background-position-y: 50%;-->
+<!--    }-->
+
+<!--    .digital-marketing-logo {-->
+<!--    width: 350px; /* Adjust this value as needed */-->
+<!--    height: 150px; /* Adjust this value as needed */-->
+<!--&lt;!&ndash;    object-fit: contain; /* This ensures the image is scaled properly within the dimensions */&ndash;&gt;-->
+<!--}-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <div class="container">-->
+<!--        <div class="header">-->
+<!--            <img src='/static//Screenshot%202024-06-20%20at%206.33.36%E2%80%AFPM.png' alt="Logo" class="logo">-->
+<!--            <img src="/static/Digital%20Marketing.png" alt="Logo" class="logo digital-marketing-logo">-->
+<!--&lt;!&ndash;            <h1>P.E.T.e</h1>&ndash;&gt;-->
+<!--        </div>-->
+<!--        <div class="nav-container">-->
+<!--            <ul class="nav-links">-->
+<!--                <li><a href="/">Scrape Products</a></li>-->
+<!--                <li><a href="/settings">Settings</a></li>-->
+<!--            </ul>-->
+<!--        </div>-->
+<!--        <div class="inner_container">-->
+<!--            <div class="container">-->
+<!--                <div id="schedule-section" style="display: block;">-->
+<!--            <h2>DataBase Configuration::</h2>-->
+<!--            <form class="UserName" id="UserForm">-->
+<!--                <div class="form-group">-->
+<!--                    <label for="user-name">UserName:</label>-->
+<!--                    <input type="text" id="user-name" name="user-name" placeholder="Enter User Name">-->
+<!--                </div>-->
+<!--                <div class="form-group">-->
+<!--                    <label for="password">Password:</label>-->
+<!--                    <input type="password" id="password" name="password" placeholder="Enter Password">-->
+<!--                </div>-->
+<!--                <div class="form-group">-->
+<!--                    <label for="schema">Schema:</label>-->
+<!--                    <input type="text" id="schema" name="schema" placeholder="Enter Schema">-->
+<!--                </div>-->
+<!--            </form>-->
+<!--            <div class="schedule-buttons">-->
+<!--                <button id="schedule-button" class="button" type="button" style="background-color: rgb(21, 166, 94);">Test</button>-->
+<!--                <button id="stop-schedule-button" class="button" type="button" style="background-color: rgb(21, 166, 94);">Save</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--<script>-->
+<!--     document.getElementById('schedule-button').addEventListener('click', function() {-->
+<!--    let formData = new FormData(document.getElementById('UserForm'));-->
+
+<!--    const userName = document.getElementById('user-name').value;-->
+<!--    const password = document.getElementById('password').value;-->
+<!--    const schema = document.getElementById('schema').value;-->
+
+<!--    formData.append('user-name', userName);-->
+<!--    formData.append('password', password);-->
+<!--    formData.append('schema', schema);-->
+
+<!--    for (let [key, value] of formData.entries()) {-->
+<!--        console.log(key + ': ' + value);-->
+<!--    }-->
+
+<!--    fetch('/db_connection', {-->
+<!--        method: 'POST',-->
+<!--        body: formData-->
+<!--    }).then(response => {-->
+<!--        if (!response.ok) {-->
+<!--            throw new Error('Network response was not ok');-->
+<!--        }-->
+<!--        return response.json();-->
+<!--    }).then(data => {-->
+<!--        console.log('Response from server:', data);-->
+<!--    }).catch(error => {-->
+<!--        console.error('Error connecting to server:', error);-->
+<!--        alert('An error occurred while connecting to the server. Please try again.');-->
+<!--    });-->
+<!--});-->
+
+
+<!--    document.getElementById('stop-schedule-button').addEventListener('click', function() {-->
+<!--    const userName = document.getElementById('user-name').value;-->
+<!--    const password = document.getElementById('password').value;-->
+<!--    const schema = document.getElementById('schema').value;-->
+
+<!--    console.log("its calling");-->
+<!--    // Create text content to be saved-->
+<!--    const textContent = `Username: ${userName}\nPassword: ${password}\nSchema: ${schema}`;-->
+
+<!--    // Create a Blob containing the text-->
+<!--    const blob = new Blob([textContent], { type: 'text/plain' });-->
+
+<!--    // Create a URL for the Blob-->
+<!--    const url = URL.createObjectURL(blob);-->
+
+<!--    // Create a link element-->
+<!--    const link = document.createElement('a');-->
+<!--    link.href = url;-->
+<!--    link.download = 'database_credentials.txt'; // Filename-->
+<!--    link.textContent = 'Download File';-->
+
+<!--    // Append the link to the body-->
+<!--    document.body.appendChild(link);-->
+
+<!--    // Programmatically click the link to trigger the download-->
+<!--    link.click();-->
+
+<!--    // Clean up-->
+<!--    document.body.removeChild(link);-->
+<!--    URL.revokeObjectURL(url);-->
+<!--});-->
+
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P.E.T.e</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url('/static/5655049.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+        .container {
+            padding: 20px;
+            margin: 0 auto;
+            width: 80%;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            background-color: #334376;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-links {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            text-align: center;
+        }
+        .nav-links li {
+            display: inline;
+            margin-right: 20px;
+        }
+        .nav-links li a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px;
+        }
+        .nav-links li a:hover {
+            background-color: #0055cc;
+            border-radius: 10px;
+        }
+        .scripts-container {
+            background-color: #f1f9fd;
+            padding: 20px;
+            border-radius: 10px;
+            color: #334376;
+        }
+        label {
+            font-weight: bold;
+            font-size: 20px;
+            color: #334376;
+            text-transform: capitalize;
+        }
+        .script-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .script-container {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            background-color: rgba(0, 138, 83, 0.25) !important;
+            padding: 10px !important;
+            gap: 10px;
+            width: 30%;
+            margin-bottom: 20px;
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .button {
+            width: 200px;
+            height: 35px;
+            font-size: 16px;
+            padding: 10px;
+            border: none;
+            border-radius: 25px;
+            color: white;
+        }
+        .run-button {
+            background-color: #15a65e;
+        }
+        .stop-button {
+            background-color: grey;
+        }
+        .stop-button:disabled {
+            background-color: grey;
+        }
+        input[type="checkbox"] {
+            margin-left: 70px;
+            width: 20px;
+            height: 20px;
+            transform: scale(.7);
+            margin-right: 1px;
+        }
+        .schedule-section {
+            background-color: rgba(4, 10, 122, 0.11);
+            display: none;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #ffffff;
+        }
+        input[type="text"],
+        input[type="password"] {
+            width: 300px;
+            height: 40px;
+            font-size: 18px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        .schedule-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .schedule-buttons .button {
+            width: 250px%;
+            background-color: #15a65e
+        }
+        .toggle-button {
+            background-color: #15a65e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .toggle-button.collapsed {
+            background-color: #6c757d;
+        }
+        .scheduled-task {
+            background-color: rgba(0, 138, 83, 0.25);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 400px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            border-radius: 10px;
+        }
+        .popup h3 {
+            margin-top: 0;
+        }
+        .popup .form-group {
+            margin-bottom: 15px;
+        }
+        .popup .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .popup .form-group input[type="date"],
+        .popup .form-group input[type="time"],
+        .popup .form-group select {
+            width: 100%;
+            padding: 5px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .popup .form-actions {
+            text-align: right;
+        }
+        .popup .form-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .popup .form-actions .cancel-button {
+            background-color: grey;
+            color: white;
+            margin-right: 10px;
+        }
+        .popup .form-actions .save-button {
+            background-color: #28a745;
+            color: white;
+        }
+        .UserName {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .UserName .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        .UserName input,
+        .UserName select {
+            width: 100%;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+            display: block;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        h1 {
+            text-align: center;
+            margin: 0;
+            font-family: 'Anton';
+        }
+        .repeat-dropdown {
+            width: 150px;
+            height: 50px;
+            font-size: 16px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .repeat-dropdown::-ms-expand {
+            display: none;
+        }
+        .repeat-dropdown:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .repeat-dropdown {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position-x: calc(100% - 10px);
+            background-position-y: 50%;
+        }
+        .digital-marketing-logo {
+            width: 350px;
+            height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src='/static//Screenshot%202024-06-20%20at%206.33.36%E2%80%AFPM.png' alt="Logo" class="logo">
+            <img src="/static/Digital%20Marketing.png" alt="Logo" class="logo digital-marketing-logo">
+        </div>
+        <div class="nav-container">
+            <ul class="nav-links">
+                <li><a href="/">Scrape Products</a></li>
+                <li><a href="/settings">Settings</a></li>
+            </ul>
+        </div>
+        <div class="inner_container">
+            <div class="container">
+                <div id="schedule-section" style="display: block;">
+                    <h2>DataBase Configuration:</h2>
+                    <form class="UserName" id="UserForm">
+                        <div class="form-group">
+                            <label for="user-name">UserName:</label>
+                            <input type="text" id="user-name" name="user-name" placeholder="Enter User Name">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <input type="password" id="password" name="password" placeholder="Enter Password">
+                        </div>
+                        <div class="form-group">
+                            <label for="schema">Schema:</label>
+                            <input type="text" id="schema" name="schema" placeholder="Enter Schema">
+                        </div>
+                    </form>
+                    <div class="schedule-buttons">
+                        <button id="schedule-button" class="button" type="button" style="background-color: rgb(21, 166, 94);">Test</button>
+                        <button id="stop-schedule-button" class="button" type="button" style="background-color: rgb(21, 166, 94);">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('schedule-button').addEventListener('click', function() {
+            let formData = new FormData(document.getElementById('UserForm'));
+
+            const userName = document.getElementById('user-name').value;
+            const password = document.getElementById('password').value;
+            const schema = document.getElementById('schema').value;
+
+            formData.append('user-name', userName);
+            formData.append('password', password);
+            formData.append('schema', schema);
+
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ': ' + value);
+            }
+
+            fetch('/db_connection', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            }).then(data => {
+                console.log('Response from server:', data);
+            }).catch(error => {
+                console.error('Error connecting to server:', error);
+                alert('An error occurred while connecting to the server. Please try again.');
+            });
+        });
+
+        document.getElementById('stop-schedule-button').addEventListener('click', function() {
+            const userName = document.getElementById('user-name').value;
+            const password = document.getElementById('password').value;
+            const schema = document.getElementById('schema').value;
+
+            console.log("its calling");
+            // Create text content to be saved
+            const textContent = `Username: ${userName}\nPassword: ${password}\nSchema: ${schema}`;
+
+            // Create a Blob containing the text
+            const blob = new Blob([textContent], { type: 'text/plain' });
+
+            // Create a URL for the Blob
+            const url = URL.createObjectURL(blob);
+
+            // Create a link element
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'database_credentials.txt'; // Filename
+            link.textContent = 'Download File';
+
+            // Append the link to the body
+            document.body.appendChild(link);
+
+            // Programmatically click the link to trigger the download
+            link.click();
+
+            // Clean up
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>
+

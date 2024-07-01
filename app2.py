@@ -9,6 +9,18 @@ from scheduler import schedule_task, stop_scheduled_task, get_scheduled_tasks, s
 
 app = Flask(__name__)
 
+# Global state object
+global_state = {
+    'run_button_disabled': False,
+    'stop_button_disabled': True,
+    'schedule_button_disabled': False,
+    'stop_schedule_button_disabled': True,
+    'scripts_running': False,
+    'scheduled_tasks': []
+}
+
+state_lock = threading.Lock()
+
 SCRIPTS_DIRECTORY = "/Users/g6-media/Webscrapping-Git/Webscrapping- Webpage/Scrapping Scripts"
 stop_execution = False
 script_status = {}
@@ -26,9 +38,10 @@ signal.signal(signal.SIGINT, stop_execution_handler)
 
 
 def run_script(script_name):
-    global stop_execution, script_status
+    global stop_execution, script_status, script_output
     script_path = os.path.join(SCRIPTS_DIRECTORY, script_name)
     script_status[script_name] = 'Running'
+    url_count = 0
     try:
         logging.debug(f"Starting script: {script_name}")
         process = subprocess.Popen(['python', script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -38,10 +51,10 @@ def run_script(script_name):
             if stop_execution or script_status[script_name] == 'Stopping':
                 logging.debug(f"Stopping script: {script_name}")
                 process.terminate()
-                process.wait(timeout=5)  # Wait for up to 5 seconds for the process to terminate
+                process.wait(timeout=5)
                 if process.poll() is None:
-                    process.kill()  # Force kill if it doesn't terminate
-                script_status[script_name] = 'Stopped'
+                    process.kill()
+                script_status[script_name] = f'Stopped (URLs scraped: {url_count})'
                 break
             try:
                 output = process.stdout.readline()
@@ -50,6 +63,9 @@ def run_script(script_name):
                 if output:
                     logging.debug(f'Script {script_name} output: {output.strip()}')
                     script_output[script_name] = script_output.get(script_name, '') + output
+                    if output.strip().startswith('https://'):  # Count URLs
+                        url_count += 1
+                        script_status[script_name] = f'Running (URLs scraped: {url_count})'
             except subprocess.TimeoutExpired:
                 continue
 
@@ -57,15 +73,15 @@ def run_script(script_name):
         script_output[script_name] = script_output.get(script_name, '') + stdout + stderr
         rc = process.poll()
 
-        if script_status[script_name] != 'Stopped':
-            script_status[script_name] = 'Completed' if rc == 0 else f'Error: {stderr.strip()}'
+        if script_status[script_name] != f'Stopped (URLs scraped: {url_count})':
+            script_status[script_name] = f'Completed (URLs scraped: {url_count})' if rc == 0 else f'Error: {stderr.strip()}'
 
     except Exception as e:
         logging.error(f"Exception running script {script_name}: {e}")
         script_status[script_name] = f'Error: {str(e)}'
     finally:
-        if script_name in script_status and script_status[script_name] == 'Running':
-            script_status[script_name] = 'Completed'
+        if script_name in script_status and 'Running' in script_status[script_name]:
+            script_status[script_name] = f'Completed (URLs scraped: {url_count})'
 
 UNWANTED_SCRIPTS = ['module_package.py']
 @app.route('/')
@@ -82,18 +98,29 @@ def index():
 @app.route('/run_scripts', methods=['POST'])
 def run_scripts():
     try:
-        global stop_execution
-        stop_execution = False
+        global global_state, stop_execution  # Add stop_execution to the global declaration
+        print("Run scripts route called")
+        with state_lock:
+            global_state['run_button_disabled'] = True
+            global_state['stop_button_disabled'] = False
+            global_state['schedule_button_disabled'] = True
+            global_state['stop_schedule_button_disabled'] = True
+            global_state['scripts_running'] = True
+
+        stop_execution = False  # Reset the stop_execution flag
+
         scripts = request.form.getlist('scripts')
         if not scripts:
-            return jsonify({'status': 'No scripts selected.'})
+            return jsonify({'status': 'No scripts selected.', **global_state})
+
         for script in scripts:
             threading.Thread(target=run_script, args=(script,)).start()
-            update_task_status(script, 'Running')  # Add this line
-        return jsonify({'status': 'Scripts running...'})
+            update_task_status(script, 'Running')
+
+        return jsonify({'status': 'Scripts running...', **global_state})
     except Exception as e:
         logging.error(f"Error running scripts: {str(e)}")
-        return jsonify({'status': f'Error running scripts: {str(e)}'}), 500
+        return jsonify({'status': f'Error running scripts: {str(e)}', **global_state}), 500
 
 def update_task_status(script_name, status):
     for task in scheduled_tasks:
@@ -101,13 +128,35 @@ def update_task_status(script_name, status):
             task['status'] = status
             break
 
+@app.route('/update_state', methods=['POST'])
+def update_state():
+    global global_state
+    try:
+        new_state = request.json
+        if new_state is None:
+            raise ValueError("No JSON data received")
+        app.logger.info(f"Received state update: {new_state}")
+        with state_lock:
+            global_state.update(new_state)
+        app.logger.info(f"Updated global state: {global_state}")
+        return jsonify(global_state)
+    except Exception as e:
+        app.logger.error(f"Error updating state: {str(e)}")
+        return jsonify({'error': str(e)}), 400
+
 
 @app.route('/stop_scripts', methods=['POST'])
 def stop_scripts():
     try:
+        global global_state
+        with state_lock:
+            global_state['run_button_disabled'] = False
+            global_state['stop_button_disabled'] = True
+            global_state['schedule_button_disabled'] = False
+            global_state['scripts_running'] = False
+
         global stop_execution, script_status
         stop_execution = True
-        # Terminate all running scripts
         for script_name, status in script_status.items():
             if status == 'Running':
                 script_status[script_name] = 'Stopping'
@@ -115,7 +164,6 @@ def stop_scripts():
     except Exception as e:
         logging.error(f"Error stopping scripts: {str(e)}")
         return jsonify({'status': f'Error stopping scripts: {str(e)}'}), 500
-
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -130,7 +178,14 @@ def status():
 def schedule_scripts():
     global stop_execution
     try:
-        stop_execution = False  # Reset the stop_execution flag when scheduling
+        global global_state
+        with state_lock:
+            global_state['run_button_disabled'] = True
+            global_state['stop_button_disabled'] = True
+            global_state['schedule_button_disabled'] = True
+            global_state['stop_schedule_button_disabled'] = False
+
+        stop_execution = False
         scripts = request.form.getlist('scripts')
         start_date = request.form.get('start-date')
         start_time = request.form.get('start-time')
@@ -151,7 +206,9 @@ def schedule_scripts():
         else:
             status = f'Scheduled {scheduled_scripts} for {start_date} at {start_time}'
 
-        return jsonify({'status': status})
+        # Return the updated task list immediately
+        tasks = get_scheduled_tasks()
+        return jsonify({'status': status, 'tasks': tasks})
     except Exception as e:
         logging.error(f"Error scheduling script: {str(e)}")
         return jsonify({'status': f'Error scheduling script: {str(e)}'}), 500
@@ -190,6 +247,18 @@ def reset_state():
 def stop_all():
     global stop_execution, script_status, scheduled_tasks
     try:
+        global global_state
+        with state_lock:
+            global_state['run_button_disabled'] = False
+            global_state['stop_button_disabled'] = True
+            global_state['schedule_button_disabled'] = False
+            global_state['stop_schedule_button_disabled'] = True
+            global_state['scripts_running'] = False
+            global_state['scheduled_tasks'] = []
+
+
+
+
         # Stop all running scripts
         stop_execution = True
         for script_name in script_status:
@@ -205,6 +274,12 @@ def stop_all():
     except Exception as e:
         return jsonify({'status': f'Error stopping all tasks and scripts: {str(e)}'}), 500
 
+
+@app.route('/get_state', methods=['GET'])
+def get_state():
+    global global_state
+    with state_lock:
+        return jsonify(global_state)
 
 @app.route('/get_scheduling_status', methods=['GET'])
 def get_scheduling_status():
@@ -238,6 +313,10 @@ def get_scheduled_tasks_route():
 def styles():
     return send_from_directory('static', 'styles.css')
 
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='192.168.199.135', port=5000, debug=True)

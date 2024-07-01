@@ -1,3 +1,5 @@
 https://www.wardsci.com/store/services/pricing/json/skuPricing.jsp?skuIds=470352-172PK&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false, requests.exceptions.ConnectionError
 https://www.nascoeducation.com/staedtler-triplus-fineliner-pen-black-9734901w.html, requests.exceptions.ConnectionError
 https://www.wardsci.com/store/services/catalog/json/stiboOrderTableRender.jsp?productId=14311829&catalogNumber=&discontinuedflag=&hasItemPages=false&specialCertRender=false&staticPage=, requests.exceptions.ConnectionError
+https://www.nascoeducation.com/health-sciences/accessories-supplies.html?p=3, requests.exceptions.ConnectionError
+https://www.nascoeducation.com/atomic-model-set-jr-x0000sb46610.html, requests.exceptions.ConnectionError

@@ -4,19 +4,30 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="Added all the scripts with WebUI integration">
+    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="UI Changes">
+      <change afterPath="$PROJECT_DIR$/S/app2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/S/settings.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backup4/app2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backup4/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backup4/scheduler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups3/app2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups3/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups3/scheduler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups5/app2.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups5/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backups5/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Nasco_products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Nasco_products.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Visited_Nasco_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_Nasco_urls.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Visited_Wardsci_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_Wardsci_urls.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Wardsci_products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Wardsci_products.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app2.py" beforeDir="false" afterPath="$PROJECT_DIR$/app2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backups2/app2.py" beforeDir="false" afterPath="$PROJECT_DIR$/backups2/app2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backups2/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/backups2/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backups2/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/backups2/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/status_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/status_log.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/settings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/url_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/url_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,36 +53,36 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Frey_products.executor": "Run",
-    "Python.TestConnection - FlinnDB- SQLAlchemy.executor": "Run",
-    "Python.TestConnection- FlinnDB- NTLM.executor": "Run",
-    "Python.TestConnection- FlinnDB.executor": "Run",
-    "Python.TestConnection- localSQL.executor": "Run",
-    "Python.TestConnection.executor": "Run",
-    "Python.app.executor": "Run",
-    "Python.app2.executor": "Run",
-    "Python.scheduler.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "/Users/g6-media/Webscrapping-Git/Webscrapping- Webpage/backups2"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Frey_products.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TestConnection - FlinnDB- SQLAlchemy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TestConnection- FlinnDB- NTLM.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TestConnection- FlinnDB.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TestConnection- localSQL.executor&quot;: &quot;Run&quot;,
+    &quot;Python.TestConnection.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.app2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scheduler.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/g6-media/Webscrapping-Git/Webscrapping- Webpage V2.2 (SSSM)  - Resolve RunAgain&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/backups5" />
+      <recent name="$PROJECT_DIR$/templates" />
+      <recent name="$PROJECT_DIR$/backup4" />
+      <recent name="$PROJECT_DIR$/backups3" />
       <recent name="$PROJECT_DIR$/backups2" />
-      <recent name="$PROJECT_DIR$/fonts" />
-      <recent name="$PROJECT_DIR$/backups" />
-      <recent name="$PROJECT_DIR$/DBConnection" />
-      <recent name="$PROJECT_DIR$/Scrapping Scripts" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/S" />
       <recent name="$PROJECT_DIR$/static" />
       <recent name="$PROJECT_DIR$/fonts" />
       <recent name="$PROJECT_DIR$/Scrapping Scripts" />
       <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/templates" />
     </key>
   </component>
   <component name="RunManager" selected="Python.app2">
@@ -227,11 +238,20 @@
       <option name="project" value="LOCAL" />
       <updated>1719309186312</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="UI Changes">
+      <option name="closed" value="true" />
+      <created>1719316564688</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1719316564688</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Added all the scripts with WebUI integration" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added all the scripts with WebUI integration" />
+    <MESSAGE value="UI Changes" />
+    <option name="LAST_COMMIT_MESSAGE" value="UI Changes" />
   </component>
 </project>

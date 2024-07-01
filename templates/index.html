@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>P.E.T.e</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<!--    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">-->
+    <link rel="stylesheet" href="http://192.168.199.135:5000{{ url_for('static', filename='styles.css') }}">
     <style>
     body {
         background-image: url('{{ url_for('static', filename='5655049.jpg') }}');
@@ -321,6 +322,21 @@
 #toggle-schedule-button {
     margin-bottom: 20px;
 }
+ @keyframes countChange {
+    0% { color: #28a745; transform: scale(1.2); }
+    50% { color: #dc3545; transform: scale(1.5); }
+    100% { color: #28a745; transform: scale(1.2); }
+}
+
+.url-count {
+    font-weight: bold;
+    font-size: 1.2em;
+    transition: color 0.3s ease;
+}
+
+.url-count.updated {
+    animation: countChange 2s ease;
+}
     </style>
 </head>
 <body>
@@ -338,7 +354,7 @@
         </div>
         <div class="scripts-container">
             <form id="script-form">
-                <h2>Select Scripts to Run:</h2>
+                <h2>Select Sites to Scrape:</h2>
                 <div class="script-row">
                     {% for script in scripts %}
                         <div class="script-container">
@@ -389,68 +405,270 @@
         </div>
     </div>
 </div>
-        <div id="consoles"></div>
+        <div id="consoles-container" class="scripts-container">
+    <h2>Console Output:</h2>
+    <div id="consoles"></div>
+</div>
     </div>
 
     <script>
-    document.getElementById('stop-button').addEventListener('click', function() {
-    fetch('/stop_scripts', {
+        console.log('JavaScript loaded');
+        const baseUrl = 'http://192.168.199.135:5000';
+<!--    document.getElementById('stop-button').addEventListener('click', function() {-->
+<!--    fetch(`${baseUrl}/stop_scripts`, {-->
+<!--        method: 'POST',-->
+<!--        headers: {-->
+<!--            'Content-Type': 'application/json'-->
+<!--        },-->
+<!--        body: JSON.stringify({})-->
+<!--    }).then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            console.log(data.status);-->
+<!--            document.getElementById('run-button').disabled = false;-->
+<!--            document.getElementById('stop-button').disabled = true;-->
+<!--            document.getElementById('schedule-button').disabled = false;-->
+<!--            document.getElementById('stop-schedule-button').disabled = true;-->
+<!--            updateButtonColors();-->
+<!--            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {-->
+<!--                checkbox.disabled = false;-->
+<!--            updateState();-->
+<!--            });-->
+<!--            saveState();-->
+
+<!--        }).catch(error => {-->
+<!--            console.error('Error stopping scripts:', error);-->
+<!--        });-->
+
+<!--});-->
+
+document.getElementById('stop-button').addEventListener('click', function() {
+    fetch(`${baseUrl}/stop_scripts`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({})
     }).then(response => response.json())
-        .then(data => {
-            console.log(data.status);
-            document.getElementById('run-button').disabled = false;
-            document.getElementById('stop-button').disabled = true;
-            document.getElementById('schedule-button').disabled = false;
-            document.getElementById('stop-schedule-button').disabled = false;
-            updateButtonColors();
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.disabled = false;
-            });
-            saveState();
+    .then(data => {
+        console.log("Stop scripts response:", data);
+        updateButtonStates(data);
 
-        }).catch(error => {
-            console.error('Error stopping scripts:', error);
+        let consolesDiv = document.getElementById('consoles');
+        let consoleDivs = consolesDiv.getElementsByClassName('console-box');
+        Array.from(consoleDivs).forEach(consoleDiv => {
+            let statusP = consoleDiv.querySelector('p');
+            if (statusP) {
+                statusP.textContent = 'Status: Stopped';
+            }
         });
 
+        // Update the state after updating console divs
+        updateState({
+            run_button_disabled: false,
+            stop_button_disabled: true,
+            schedule_button_disabled: false,
+            stop_schedule_button_disabled: true
+        });
+
+        // Stop updating status
+        clearInterval(statusUpdateInterval);
+    })
+    .catch(error => {
+        console.error('Error stopping scripts:', error);
+        // If there's an error, fetch the current state
+        fetch(`${baseUrl}/get_state`)
+            .then(response => response.json())
+            .then(state => {
+                console.log("Fetched current state:", state);
+                updateButtonStates(state);
+            })
+            .catch(stateError => console.error('Error fetching state:', stateError));
+    });
 });
 
-    document.getElementById('run-button').addEventListener('click', function() {
+<!--    document.getElementById('run-button').addEventListener('click', function() {-->
+<!--    let formData = new FormData(document.getElementById('script-form'));-->
+
+<!--    fetch(`${baseUrl}/run_scripts`, {-->
+<!--        method: 'POST',-->
+<!--        body: new URLSearchParams(formData)-->
+<!--    }).then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            console.log("Run scripts response:", data);-->
+<!--            updateButtonStates(data);-->
+<!--            updateState({-->
+<!--                run_button_disabled: true,-->
+<!--                stop_button_disabled: false,-->
+<!--                schedule_button_disabled: true,-->
+<!--                stop_schedule_button_disabled: true-->
+<!--            });-->
+<!--            let selectedScripts = formData.getAll('scripts');-->
+<!--            let consolesDiv = document.getElementById('consoles');-->
+<!--            consolesDiv.innerHTML = '';-->
+<!--            selectedScripts.forEach(script => {-->
+<!--                let consoleDiv = document.createElement('div');-->
+<!--                consoleDiv.id = `console-${script}`;-->
+<!--                consoleDiv.className = 'console-box';-->
+<!--                consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: Running</p><p>URLs Scraped: 0</p>`;-->
+<!--                consolesDiv.appendChild(consoleDiv);-->
+<!--                updateState();-->
+<!--            });-->
+
+
+
+
+<!--            updateStatus();-->
+<!--            document.getElementById('run-button').disabled = true;-->
+<!--            document.getElementById('stop-button').disabled = false;-->
+<!--            document.getElementById('schedule-button').disabled = true;-->
+<!--            document.getElementById('stop-schedule-button').disabled = true;-->
+<!--            updateButtonColors();-->
+<!--            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {-->
+<!--                checkbox.disabled = true;-->
+<!--            });-->
+<!--            saveState(); // Save state immediately after updating UI-->
+<!--        });-->
+<!--});Need to replace-->
+
+document.getElementById('run-button').addEventListener('click', function() {
     let formData = new FormData(document.getElementById('script-form'));
 
-    fetch('/run_scripts', {
+    fetch(`${baseUrl}/run_scripts`, {
         method: 'POST',
         body: new URLSearchParams(formData)
     }).then(response => response.json())
-        .then(data => {
-            let selectedScripts = formData.getAll('scripts');
-            let consolesDiv = document.getElementById('consoles');
-            consolesDiv.innerHTML = '';
-            selectedScripts.forEach(script => {
-                let consoleDiv = document.createElement('div');
-                consoleDiv.id = `console-${script}`;
-                consoleDiv.className = 'console-box';
-                consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: Running</p><p>URLs Scraped: 0</p>`;
-                consolesDiv.appendChild(consoleDiv);
-            });
-            updateStatus();
-            document.getElementById('run-button').disabled = true;
-            document.getElementById('stop-button').disabled = false;
-            document.getElementById('schedule-button').disabled = true;
-            document.getElementById('stop-schedule-button').disabled = true;
-            updateButtonColors();
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.disabled = true;
-            });
-            saveState(); // Save state immediately after updating UI
+    .then(data => {
+        console.log("Run scripts response:", data);
+        updateButtonStates(data);
+
+        let selectedScripts = formData.getAll('scripts');
+        let consolesDiv = document.getElementById('consoles');
+        consolesDiv.innerHTML = '';
+        selectedScripts.forEach(script => {
+            let consoleDiv = document.createElement('div');
+            consoleDiv.id = `console-${script}`;
+            consoleDiv.className = 'console-box';
+            consoleDiv.innerHTML = `<h3>${script}</h3><p>Status: Running</p><p>URLs Scraped: 0</p>`;
+            consolesDiv.appendChild(consoleDiv);
         });
+
+        // Update the state after setting up the console divs
+        updateState({
+            run_button_disabled: true,
+            stop_button_disabled: false,
+            schedule_button_disabled: true,
+            stop_schedule_button_disabled: true
+        });
+
+        // Start updating status
+        updateStatus();
+    })
+    .catch(error => {
+        console.error('Error running scripts:', error);
+        // If there's an error, fetch the current state
+        fetch(`${baseUrl}/get_state`)
+            .then(response => response.json())
+            .then(state => {
+                console.log("Fetched current state:", state);
+                updateButtonStates(state);
+            })
+            .catch(stateError => console.error('Error fetching state:', stateError));
+    });
 });
 
-    document.getElementById('schedule-button').addEventListener('click', function() {
+<!--document.getElementById('run-button').addEventListener('click', function() {-->
+<!--    let formData = new FormData(document.getElementById('script-form'));-->
+
+<!--    fetch(`${baseUrl}/run_scripts`, {-->
+<!--        method: 'POST',-->
+<!--        body: new URLSearchParams(formData)-->
+<!--    }).then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            console.log("Run scripts response:", data);-->
+<!--            updateButtonStates(data);-->
+<!--            // Start updating status-->
+<!--            updateStatus();-->
+<!--        })-->
+<!--        .catch(error => console.error('Error running scripts:', error));-->
+<!--});-->
+
+<!--document.addEventListener('DOMContentLoaded', function() {-->
+<!--    console.log('DOM fully loaded');-->
+
+<!--    const runButton = document.getElementById('run-button');-->
+<!--    console.log('Run button:', runButton);-->
+
+<!--    if (runButton) {-->
+<!--        runButton.addEventListener('click', function() {-->
+<!--            console.log('Run button clicked');-->
+<!--            let formData = new FormData(document.getElementById('script-form'));-->
+
+<!--            fetch('/run_scripts', {-->
+<!--                method: 'POST',-->
+<!--                body: formData-->
+<!--            }).then(response => response.json())-->
+<!--                .then(data => {-->
+<!--                    console.log('Run scripts response:', data);-->
+<!--                    updateState();-->
+<!--                })-->
+<!--                .catch(error => console.error('Error:', error));-->
+<!--        });-->
+<!--    } else {-->
+<!--        console.error('Run button not found');-->
+<!--    }-->
+<!--});-->
+
+<!--    document.getElementById('schedule-button').addEventListener('click', function() {-->
+<!--    let formData = new FormData(document.getElementById('script-form'));-->
+<!--    let checkedScripts = document.querySelectorAll('input[name="scripts"]:checked');-->
+
+<!--    if (checkedScripts.length > 0) {-->
+<!--        checkedScripts.forEach(script => {-->
+<!--            formData.append('scripts', script.value);-->
+<!--        });-->
+<!--        const startDate = document.getElementById('start-date').value;-->
+<!--        const startTime = document.getElementById('start-time').value;-->
+<!--        const recurrenceType = document.getElementById('recurrence-type').value;-->
+
+<!--        formData.append('start-date', startDate);-->
+<!--        formData.append('start-time', startTime);-->
+<!--        formData.append('recurrence-type', recurrenceType);-->
+
+
+<!--        fetch(`${baseUrl}/schedule_scripts`, {-->
+<!--            method: 'POST',-->
+<!--            body: formData-->
+<!--        }).then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            if (data.status.startsWith('Scheduled')) {-->
+<!--                displayScheduledTask(data.status);-->
+<!--                document.getElementById('run-button').disabled = true;-->
+<!--                document.getElementById('run-button').style.backgroundColor = 'grey';-->
+<!--                document.getElementById('stop-button').disabled = true;-->
+<!--                document.getElementById('schedule-button').disabled = true;-->
+<!--                document.getElementById('stop-schedule-button').disabled = false;-->
+<!--                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {-->
+<!--                checkbox.disabled = true;-->
+<!--                updateState();-->
+<!--            });-->
+<!--                updateButtonColors();-->
+<!--                saveState();-->
+<!--                window.stop_execution = false;-->
+<!--            } else {-->
+<!--                console.error('Scheduling error:', data.status);-->
+<!--                alert('Error scheduling script: ' + data.status);-->
+<!--            }-->
+<!--        }).catch(error => {-->
+<!--            console.error('Error scheduling script:', error);-->
+<!--            alert('An error occurred while scheduling the script. Please try again.');-->
+<!--        });-->
+<!--    } else {-->
+<!--        alert('Please select a script to schedule.');-->
+<!--    }-->
+<!--    saveState();-->
+<!--});-->
+
+document.getElementById('schedule-button').addEventListener('click', function() {
     let formData = new FormData(document.getElementById('script-form'));
     let checkedScripts = document.querySelectorAll('input[name="scripts"]:checked');
 
@@ -466,22 +684,25 @@
         formData.append('start-time', startTime);
         formData.append('recurrence-type', recurrenceType);
 
-        fetch('/schedule_scripts', {
+        fetch(`${baseUrl}/schedule_scripts`, {
             method: 'POST',
             body: formData
         }).then(response => response.json())
         .then(data => {
+            console.log("Schedule scripts response:", data);
             if (data.status.startsWith('Scheduled')) {
+                updateScheduledTaskDisplay(data.tasks);
                 displayScheduledTask(data.status);
-                document.getElementById('run-button').disabled = true;
-                document.getElementById('run-button').style.backgroundColor = 'grey';
-                document.getElementById('stop-button').disabled = true;
-                document.getElementById('schedule-button').disabled = true;
-                document.getElementById('stop-schedule-button').disabled = false;
+                updateButtonStates({
+                    run_button_disabled: true,
+                    stop_button_disabled: true,
+                    schedule_button_disabled: true,
+                    stop_schedule_button_disabled: false
+                });
                 document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.disabled = true;
-            });
-                updateButtonColors();
+                    checkbox.disabled = true;
+                });
+                updateState();
                 saveState();
                 window.stop_execution = false;
             } else {
@@ -491,11 +712,18 @@
         }).catch(error => {
             console.error('Error scheduling script:', error);
             alert('An error occurred while scheduling the script. Please try again.');
+            // If there's an error, fetch the current state
+            fetch(`${baseUrl}/get_state`)
+                .then(response => response.json())
+                .then(state => {
+                    console.log("Fetched current state:", state);
+                    updateButtonStates(state);
+                })
+                .catch(stateError => console.error('Error fetching state:', stateError));
         });
     } else {
         alert('Please select a script to schedule.');
     }
-    saveState();
 });
 
     document.getElementById('toggle-schedule-button').addEventListener('click', function() {
@@ -515,39 +743,150 @@
 
 
 
-    function displayScheduledTask(status) {
-        let scheduledTaskInfo = document.getElementById('scheduled-task-info');
+<!--    function displayScheduledTask(status) {-->
+<!--        let scheduledTaskInfo = document.getElementById('scheduled-task-info');-->
+<!--        scheduledTaskInfo.textContent = `Scheduled Task: ${status}`;-->
+<!--        document.getElementById('scheduled-task-display').style.display = 'block';-->
+<!--        document.getElementById('run-button').disabled = true;-->
+<!--    }-->
+
+function displayScheduledTask(status) {
+    console.log("Displaying scheduled task:", status);
+
+    let scheduledTaskInfo = document.getElementById('scheduled-task-info');
+    let scheduledTaskDisplay = document.getElementById('scheduled-task-display');
+
+    if (status && status.startsWith('Scheduled')) {
         scheduledTaskInfo.textContent = `Scheduled Task: ${status}`;
-        document.getElementById('scheduled-task-display').style.display = 'block';
-        document.getElementById('run-button').disabled = true;
-    }
+        scheduledTaskDisplay.style.display = 'block';
 
-    function updateStatus() {
-        fetch('/status')
+        updateButtonStates({
+            run_button_disabled: true,
+            stop_button_disabled: true,
+            schedule_button_disabled: true,
+            stop_schedule_button_disabled: false
+        });
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.disabled = true;
+        });
+
+        updateState();
+        saveState();
+    } else {
+        console.error('Unexpected status when displaying scheduled task:', status);
+        scheduledTaskInfo.textContent = 'Error: Unable to display scheduled task';
+        scheduledTaskDisplay.style.display = 'block';
+
+        // Fetch current state to ensure UI is consistent
+        fetch(`${baseUrl}/get_state`)
             .then(response => response.json())
-            .then(data => {
-                let consolesDiv = document.getElementById('consoles');
-                Object.keys(data).forEach(scriptName => {
-                    let consoleDiv = document.getElementById(`console-${scriptName}`);
-                    if (consoleDiv) {
-                        consoleDiv.innerHTML = `<h3>${scriptName}</h3><p>Status: ${data[scriptName]}</p>`;
-                    } else {
-                        consoleDiv = document.createElement('div');
-                        consoleDiv.id = `console-${scriptName}`;
-                        consoleDiv.className = 'console-box';
-                        consoleDiv.innerHTML = `<h3>${scriptName}</h3><p>Status: ${data[scriptName]}</p>`;
-                        consolesDiv.appendChild(consoleDiv);
-                    }
-                    saveState();
-                });
-                setTimeout(updateStatus, 1000);
-            });
+            .then(state => {
+                console.log("Fetched current state:", state);
+                updateButtonStates(state);
+            })
+            .catch(stateError => console.error('Error fetching state:', stateError));
     }
+}
 
-    updateStatus();
+<!--    function updateStatus() {-->
+<!--    fetch('/status')-->
+<!--        .then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            Object.keys(data).forEach(scriptName => {-->
+<!--                let statusText = data[scriptName];-->
+<!--                let urlCount = 0;-->
+<!--                let match = statusText.match(/URLs scraped: (\d+)/);-->
+<!--                if (match) {-->
+<!--                    urlCount = parseInt(match[1]);-->
+<!--                }-->
+<!--                let status = statusText.split('(')[0].trim();-->
+<!--                createOrUpdateConsoleDiv(scriptName, status, urlCount);-->
+<!--            });-->
+<!--            saveState();-->
+<!--            setTimeout(updateStatus, 1000);-->
 
-    document.getElementById('stop-schedule-button').addEventListener('click', function() {
-    fetch('/stop_all', {
+<!--            // The following part was in a separate .then() block, which caused the error-->
+<!--            document.getElementById('run-button').disabled = data.run_button_disabled;-->
+<!--            document.getElementById('stop-button').disabled = data.stop_button_disabled;-->
+<!--            document.getElementById('schedule-button').disabled = data.schedule_button_disabled;-->
+<!--            document.getElementById('stop-schedule-button').disabled = data.stop_schedule_button_disabled;-->
+<!--            updateButtonColors();-->
+<!--            if (data.scripts_running) {-->
+<!--                updateStatus();-->
+<!--            }-->
+<!--            // Update scheduled tasks display-->
+<!--            let scheduledTaskInfo = document.getElementById('scheduled-task-info');-->
+<!--            if (data.scheduled_tasks && data.scheduled_tasks.length > 0) {-->
+<!--                let tasksInfo = data.scheduled_tasks.map(task =>-->
+<!--                    `${task.script_name} scheduled for ${task.start_date} at ${task.start_time} (${task.recurrence_type})`-->
+<!--                ).join(', ');-->
+<!--                scheduledTaskInfo.textContent = tasksInfo;-->
+<!--                document.getElementById('scheduled-task-display').style.display = 'block';-->
+<!--            } else {-->
+<!--                document.getElementById('scheduled-task-display').style.display = 'none';-->
+<!--            }-->
+<!--        })-->
+<!--        .catch(error => console.error('Error updating status:', error));-->
+<!--}--Need to replace>
+
+function updateStatus() {
+    fetch(`${baseUrl}/status`)
+        .then(response => response.json())
+        .then(data => {
+            Object.keys(data).forEach(scriptName => {
+                let statusText = data[scriptName];
+                let urlCount = 0;
+                let match = statusText.match(/URLs scraped: (\d+)/);
+                if (match) {
+                    urlCount = parseInt(match[1]);
+                }
+                let status = statusText.split('(')[0].trim();
+                createOrUpdateConsoleDiv(scriptName, status, urlCount);
+            });
+            setTimeout(updateStatus, 1000);
+        })
+        .catch(error => console.error('Error updating status:', error));
+}
+
+
+<!--    updateStatus();-->
+
+<!--    document.getElementById('stop-schedule-button').addEventListener('click', function() {-->
+<!--    fetch(`${baseUrl}/stop_all`, {-->
+<!--        method: 'POST',-->
+<!--        headers: {-->
+<!--            'Content-Type': 'application/json'-->
+<!--        },-->
+<!--        body: JSON.stringify({})-->
+<!--    })-->
+<!--    .then(response => response.json())-->
+<!--    .then(data => {-->
+<!--        console.log(data.status);-->
+<!--        document.getElementById('scheduled-task-info').textContent = '';-->
+<!--        document.getElementById('scheduled-task-display').style.display = 'none';-->
+<!--&lt;!&ndash;        document.getElementById('run-button').disabled = false;&ndash;&gt;-->
+<!--&lt;!&ndash;        document.getElementById('stop-button').disabled = true;&ndash;&gt;-->
+<!--&lt;!&ndash;        document.getElementById('schedule-button').disabled = false;&ndash;&gt;-->
+<!--&lt;!&ndash;        document.getElementById('stop-schedule-button').disabled = true;&ndash;&gt;-->
+<!--            pollStatus();-->
+<!--        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {-->
+<!--            checkbox.disabled = false;-->
+
+<!--        });-->
+<!--        updateButtonColors();-->
+<!--        saveState();-->
+<!--        updateState();-->
+<!--        alert('All scheduled tasks and running scripts have been stopped.');-->
+<!--    })-->
+<!--    .catch(error => {-->
+<!--        console.error('Error stopping all tasks and scripts:', error);-->
+<!--        alert('An error occurred while stopping tasks and scripts. Please try again.');-->
+<!--    });-->
+<!--});-->
+
+document.getElementById('stop-schedule-button').addEventListener('click', function() {
+    fetch(`${baseUrl}/stop_all`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -556,50 +895,150 @@
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data.status);
-        document.getElementById('scheduled-task-info').textContent = '';
-        document.getElementById('scheduled-task-display').style.display = 'none';
-<!--        document.getElementById('run-button').disabled = false;-->
-<!--        document.getElementById('stop-button').disabled = true;-->
-<!--        document.getElementById('schedule-button').disabled = false;-->
-<!--        document.getElementById('stop-schedule-button').disabled = true;-->
+        console.log("Stop all response:", data);
+        if (data.status === 'All scheduled tasks and running scripts have been stopped.' ||
+            data.status === 'Stopped') {
+            alert(data.status);
+            updateScheduledTaskDisplay([]);
             pollStatus();
-        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-            checkbox.disabled = false;
-        });
-        updateButtonColors();
-        saveState();
-        alert('All scheduled tasks and running scripts have been stopped.');
+            document.getElementById('scheduled-task-info').textContent = '';
+            document.getElementById('scheduled-task-display').style.display = 'none';
+
+            updateButtonStates({
+                run_button_disabled: false,
+                stop_button_disabled: true,
+                schedule_button_disabled: false,
+                stop_schedule_button_disabled: true
+            });
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.disabled = false;
+            });
+
+<!--            pollStatus();-->
+            updateState();
+            saveState();
+
+            alert(data.status);
+        } else {
+            pollStatus();
+            console.error('Unexpected response when stopping all tasks and scripts:', data.status);
+            alert('Unexpected response when stopping all tasks and scripts: ' + data.status);
+        }
     })
     .catch(error => {
         console.error('Error stopping all tasks and scripts:', error);
         alert('An error occurred while stopping tasks and scripts. Please try again.');
+        // If there's an error, fetch the current state
+        fetch(`${baseUrl}/get_state`)
+            .then(response => response.json())
+            .then(state => {
+                console.log("Fetched current state:", state);
+                updateButtonStates(state);
+            })
+            .catch(stateError => console.error('Error fetching state:', stateError));
     });
 });
 
+<!--function pollStatus() {-->
+<!--    fetch('/status')-->
+<!--        .then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            const anyRunning = Object.values(data).some(status => status === 'Running' || status === 'Stopping');-->
+<!--            if (!anyRunning) {-->
+<!--                document.getElementById('run-button').disabled = false;-->
+<!--                document.getElementById('stop-button').disabled = true;-->
+<!--                document.getElementById('schedule-button').disabled = false;-->
+<!--                document.getElementById('stop-schedule-button').disabled = true;-->
+<!--                updateButtonColors();-->
+<!--                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {-->
+<!--                    checkbox.disabled = false;-->
+<!--                });-->
+<!--                saveState();-->
+<!--            } else {-->
+<!--                // Continue polling if any scripts are still running-->
+<!--                setTimeout(pollStatus, 1000);-->
+<!--            }-->
+<!--        })-->
+<!--        .catch(error => {-->
+<!--            console.error('Error polling status:', error);-->
+<!--        });-->
+<!--}-->
+
 function pollStatus() {
-    fetch('/status')
-        .then(response => response.json())
-        .then(data => {
-            const anyRunning = Object.values(data).some(status => status === 'Running' || status === 'Stopping');
-            if (!anyRunning) {
-                document.getElementById('run-button').disabled = false;
-                document.getElementById('stop-button').disabled = true;
-                document.getElementById('schedule-button').disabled = false;
-                document.getElementById('stop-schedule-button').disabled = true;
-                updateButtonColors();
-                document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.disabled = false;
-                });
-                saveState();
-            } else {
-                // Continue polling if any scripts are still running
-                setTimeout(pollStatus, 1000);
-            }
-        })
-        .catch(error => {
-            console.error('Error polling status:', error);
-        });
+    Promise.all([
+        fetch(`${baseUrl}/status`),
+        fetch(`${baseUrl}/get_scheduled_tasks`)
+    ])
+    .then(([statusResponse, tasksResponse]) => Promise.all([statusResponse.json(), tasksResponse.json()]))
+    .then(([statusData, tasksData]) => {
+        updateConsoles(statusData);
+        updateScheduledTaskDisplay(tasksData);
+        updateButtonStates(statusData);
+
+        // Continue polling
+        setTimeout(pollStatus, 1000);
+    })
+    .catch(error => {
+        console.error('Error polling status:', error);
+        setTimeout(pollStatus, 1000);
+    });
+}
+
+function updateScheduledTaskDisplay(tasks) {
+    let scheduledTaskInfo = document.getElementById('scheduled-task-info');
+    let scheduledTaskDisplay = document.getElementById('scheduled-task-display');
+
+    if (tasks && tasks.length > 0) {
+        let tasksInfo = tasks.map(task =>
+            `${task.script_name} scheduled for ${task.run_date} at ${task.run_time}`
+        ).join(', ');
+        scheduledTaskInfo.textContent = tasksInfo;
+        scheduledTaskDisplay.style.display = 'block';
+    } else {
+        scheduledTaskInfo.textContent = '';
+        scheduledTaskDisplay.style.display = 'none';
+    }
+}
+
+function updateState(newState) {
+    console.log("Sending state update:", newState);
+    fetch(`${baseUrl}/update_state`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newState)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => { throw new Error(text) })
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("State update response:", data);
+        updateButtonStates(data);
+    })
+    .catch(error => {
+        console.error('Error updating state:', error);
+        // Fetch the current state from the server
+        fetch(`${baseUrl}/get_state`)
+            .then(response => response.json())
+            .then(data => {
+                console.log("Fetched current state:", data);
+                updateButtonStates(data);
+            })
+            .catch(error => console.error('Error fetching state:', error));
+    });
+}
+
+function updateButtonStates(state) {
+    document.getElementById('run-button').disabled = state.run_button_disabled;
+    document.getElementById('stop-button').disabled = state.stop_button_disabled;
+    document.getElementById('schedule-button').disabled = state.schedule_button_disabled;
+    document.getElementById('stop-schedule-button').disabled = state.stop_schedule_button_disabled;
+    updateButtonColors();
 }
 <!--    function saveState() {-->
 <!--    const checkboxes = document.querySelectorAll('input[type="checkbox"]');-->
@@ -617,7 +1056,7 @@ function pollStatus() {
 function saveState() {
     const checkboxes = document.querySelectorAll('input[type="checkbox"]');
     const state = {
-        checkboxes: Array.from(document.querySelectorAll('input[type="checkbox"]')).map(cb => ({ id: cb.id, checked: cb.checked })),
+        checkboxes: Array.from(document.querySelectorAll('input[type="checkbox"]')).map(cb => ({ id: cb.id, checked: cb.checked, disabled: cb.disabled })),
         runButtonDisabled: document.getElementById('run-button').disabled,
         stopButtonDisabled: document.getElementById('stop-button').disabled,
         scheduleButtonDisabled: document.getElementById('schedule-button').disabled,
@@ -627,6 +1066,7 @@ function saveState() {
         recurrenceType: document.getElementById('recurrence-type').value,
         scheduledTaskDisplay: document.getElementById('scheduled-task-display').style.display,
         scheduledTaskInfo: document.getElementById('scheduled-task-info').textContent
+
     };
     localStorage.setItem('pageState', JSON.stringify(state));
 }
@@ -712,6 +1152,16 @@ function saveState() {
 
 function loadState() {
     return new Promise((resolve, reject) => {
+    fetch('/get_state')
+            .then(response => response.json())
+            .then(state => {
+                updateButtonStates(state);
+                // ... rest of the code ...
+            })
+            .catch(error => {
+                console.error('Error loading state:', error);
+                reject(error);
+            });
         const savedState = localStorage.getItem('pageState');
         if (savedState) {
             const state = JSON.parse(savedState);
@@ -719,7 +1169,10 @@ function loadState() {
             // Restore checkboxes and other inputs
             state.checkboxes.forEach(cb => {
                 const checkbox = document.getElementById(cb.id);
-                if (checkbox) checkbox.checked = cb.checked;
+                if (checkbox) {
+                    checkbox.checked = cb.checked;
+                    checkbox.disabled = cb.disabled;
+                }
             });
             document.getElementById('start-date').value = state.startDate;
             document.getElementById('start-time').value = state.startTime;
@@ -730,6 +1183,7 @@ function loadState() {
             document.getElementById('stop-button').disabled = state.stopButtonDisabled;
             document.getElementById('schedule-button').disabled = state.scheduleButtonDisabled;
             document.getElementById('stop-schedule-button').disabled = state.stopScheduleButtonDisabled;
+
 
             // Restore scheduled task display
             document.getElementById('scheduled-task-display').style.display = state.scheduledTaskDisplay;
@@ -769,6 +1223,7 @@ function loadState() {
                 console.error('Error checking script status:', error);
                 reject(error);
             });
+
     });
 }
 
@@ -805,6 +1260,48 @@ function updateButtonColors() {
         document.getElementById('start-time').value = `${hours}:${minutes}`;
     }
 
+function initializeConsoleDivs(scripts) {
+    let consolesDiv = document.getElementById('consoles');
+    consolesDiv.innerHTML = ''; // Clear existing content
+    scripts.forEach(scriptName => {
+        let consoleDiv = document.createElement('div');
+        consoleDiv.id = `console-${scriptName}`;
+        consoleDiv.className = 'console-box';
+        consoleDiv.innerHTML = `
+            <h3>${scriptName}</h3>
+            <p>Status: Not started</p>
+            <p>URLs Scraped: <span class="url-count">0</span></p>
+        `;
+        consolesDiv.appendChild(consoleDiv);
+    });
+}
+
+function createOrUpdateConsoleDiv(scriptName, status, urlCount) {
+    let consolesDiv = document.getElementById('consoles');
+    let consoleDiv = document.getElementById(`console-${scriptName}`);
+
+    if (!consoleDiv) {
+        consoleDiv = document.createElement('div');
+        consoleDiv.id = `console-${scriptName}`;
+        consoleDiv.className = 'console-box';
+        consolesDiv.appendChild(consoleDiv);
+    }
+
+    let oldUrlCount = parseInt(consoleDiv.querySelector('.url-count')?.textContent || '0');
+
+    consoleDiv.innerHTML = `
+        <h3>${scriptName}</h3>
+        <p>Status: ${status}</p>
+        <p>URLs Scraped: <span class="url-count ${urlCount > oldUrlCount ? 'updated' : ''}">${urlCount}</span></p>
+    `;
+
+    if (urlCount > oldUrlCount) {
+        setTimeout(() => {
+            consoleDiv.querySelector('.url-count').classList.remove('updated');
+        }, 1000);
+    }
+}
+
 window.addEventListener('DOMContentLoaded', function() {
     loadState().then(() => {
         const scheduleSection = document.getElementById('schedule-section');
@@ -813,6 +1310,16 @@ window.addEventListener('DOMContentLoaded', function() {
         scheduleSection.style.display = 'none';
         toggleButton.textContent = 'Show Schedule Options';
         toggleButton.classList.add('collapsed');
+
+        // Initialize console divs
+        let scripts = Array.from(document.querySelectorAll('#script-form input[type="checkbox"]')).map(cb => cb.value);
+        initializeConsoleDivs(scripts);
+
+         // Start polling
+        pollStatus();
+
+        // Start updating status
+        updateStatus();
     }).catch(error => {
         console.error('Error loading state:', error);
     });
