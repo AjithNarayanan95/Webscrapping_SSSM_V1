@@ -8,6 +8,8 @@ import logging
 from scheduler import schedule_task, stop_scheduled_task, get_scheduled_tasks, schedule_monthly_task, scheduled_tasks
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a secure secret key
+socketio = SocketIO(app)
 
 # Global state object
 global_state = {
