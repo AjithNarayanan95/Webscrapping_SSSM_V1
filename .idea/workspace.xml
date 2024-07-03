@@ -5,29 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="UI Changes">
-      <change afterPath="$PROJECT_DIR$/S/app2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/S/settings.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backup4/app2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backup4/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backup4/scheduler.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups3/app2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups3/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups3/scheduler.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups5/app2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups5/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backups5/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Nasco_products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Nasco_products.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visited_Nasco_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_Nasco_urls.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visited_Wardsci_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_Wardsci_urls.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Wardsci_products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Wardsci_products.csv" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app2.py" beforeDir="false" afterPath="$PROJECT_DIR$/app2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backups2/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/backups2/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/status_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/status_log.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/settings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/settings.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/url_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/url_log.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
