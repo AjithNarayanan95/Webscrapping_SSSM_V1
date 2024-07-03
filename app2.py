@@ -1,15 +1,26 @@
 import signal
+import eventlet
+eventlet.monkey_patch()
 import time
 from flask import Flask, render_template, request, jsonify, send_from_directory
 import threading
 import subprocess
 import os
 import logging
+from flask_socketio import SocketIO, emit
+from flask_sqlalchemy import SQLAlchemy
 from scheduler import schedule_task, stop_scheduled_task, get_scheduled_tasks, schedule_monthly_task, scheduled_tasks
+from datetime import datetime, timedelta
+import uuid
+
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'  # Replace with a secure secret key
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///scheduled_tasks.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 socketio = SocketIO(app)
+db = SQLAlchemy(app)
 
 # Global state object
 global_state = {
@@ -30,7 +41,128 @@ script_output = {}
 
 logging.basicConfig(level=logging.DEBUG)
 
+class ScheduledTask(db.Model):
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    script_name = db.Column(db.String(100), nullable=False)
+    run_date = db.Column(db.Date, nullable=False)
+    run_time = db.Column(db.Time, nullable=False)
+    recurrence_type = db.Column(db.String(20), nullable=False)
+    status = db.Column(db.String(20), default='Scheduled')
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'script_name': self.script_name,
+            'run_date': self.run_date.strftime('%Y-%m-%d'),
+            'run_time': self.run_time.strftime('%H:%M'),
+            'recurrence_type': self.recurrence_type,
+            'status': self.status
+        }
+
+
+# WebSocket changes
+@socketio.on('connect')
+def handle_connect():
+    emit('state_update', global_state)
+
+
+@socketio.on('run_scripts')
+def handle_run_scripts(data):
+    scripts = data['scripts']
+    if not scripts:
+        emit('error', {'message': 'No scripts selected.'})
+        return
+
+    with state_lock:
+        global_state['run_button_disabled'] = True
+        global_state['stop_button_disabled'] = False
+        global_state['schedule_button_disabled'] = True
+        global_state['stop_schedule_button_disabled'] = True
+        global_state['scripts_running'] = True
+
+    global stop_execution
+    stop_execution = False
+
+    for script in scripts:
+        threading.Thread(target=run_script, args=(script,)).start()
+        update_task_status(script, 'Running')
+
+    emit('state_update', global_state, broadcast=True)
+
+
+@socketio.on('stop_scripts')
+def handle_stop_scripts():
+    global stop_execution, script_status
+    stop_execution = True
+    for script_name, status in script_status.items():
+        if status == 'Running':
+            script_status[script_name] = 'Stopping'
+
+    with state_lock:
+        global_state['run_button_disabled'] = False
+        global_state['stop_button_disabled'] = True
+        global_state['schedule_button_disabled'] = False
+        global_state['scripts_running'] = False
+
+    emit('state_update', global_state, broadcast=True)
+
+
+@socketio.on('schedule_scripts')
+def handle_schedule_scripts(data):
+    global stop_execution
+    stop_execution = False
+    scripts = data['scripts']
+    start_date = data['start_date']
+    start_time = data['start_time']
+    recurrence_type = data['recurrence_type']
+
+    unique_scripts = list(set(scripts))
+    scheduled_scripts = []
+
+    for script in unique_scripts:
+        if recurrence_type == 'monthly':
+            schedule_monthly_task(script, start_date, start_time, run_script)
+        else:
+            schedule_task(script, start_date, start_time, run_script)
+        scheduled_scripts.append(script)
+
+    with state_lock:
+        global_state['run_button_disabled'] = True
+        global_state['stop_button_disabled'] = True
+        global_state['schedule_button_disabled'] = True
+        global_state['stop_schedule_button_disabled'] = False
+
+    if recurrence_type == 'monthly':
+        status = f'Scheduled {scheduled_scripts} monthly from {start_date} at {start_time}'
+    else:
+        status = f'Scheduled {scheduled_scripts} for {start_date} at {start_time}'
+
+    tasks = get_scheduled_tasks()
+    emit('schedule_update', {'status': status, 'tasks': tasks}, broadcast=True)
+    emit('state_update', global_state, broadcast=True)
+
+
+@socketio.on('stop_all')
+def handle_stop_all():
+    global stop_execution, script_status, scheduled_tasks
+    stop_execution = True
+    for script_name in script_status:
+        script_status[script_name] = 'Stopped'
+
+    stop_scheduled_task()
+    scheduled_tasks.clear()
+
+    with state_lock:
+        global_state['run_button_disabled'] = False
+        global_state['stop_button_disabled'] = True
+        global_state['schedule_button_disabled'] = False
+        global_state['stop_schedule_button_disabled'] = True
+        global_state['scripts_running'] = False
+        global_state['scheduled_tasks'] = []
+
+    emit('state_update', global_state, broadcast=True)
+    emit('all_stopped', {'status': 'All scheduled tasks and running scripts have been stopped.'}, broadcast=True)
+# WebSocket changes
 def stop_execution_handler(signum, frame):
     global stop_execution
     stop_execution = True
@@ -57,6 +189,7 @@ def run_script(script_name):
                 if process.poll() is None:
                     process.kill()
                 script_status[script_name] = f'Stopped (URLs scraped: {url_count})'
+                socketio.emit('script_update', {'script_name': script_name, 'status': script_status[script_name]})
                 break
             try:
                 output = process.stdout.readline()
@@ -68,6 +201,8 @@ def run_script(script_name):
                     if output.strip().startswith('https://'):  # Count URLs
                         url_count += 1
                         script_status[script_name] = f'Running (URLs scraped: {url_count})'
+                        socketio.emit('script_update',
+                                      {'script_name': script_name, 'status': script_status[script_name]})
             except subprocess.TimeoutExpired:
                 continue
 
@@ -77,10 +212,13 @@ def run_script(script_name):
 
         if script_status[script_name] != f'Stopped (URLs scraped: {url_count})':
             script_status[script_name] = f'Completed (URLs scraped: {url_count})' if rc == 0 else f'Error: {stderr.strip()}'
+        socketio.emit('script_update', {'script_name': script_name, 'status': script_status[script_name]})
 
     except Exception as e:
         logging.error(f"Exception running script {script_name}: {e}")
         script_status[script_name] = f'Error: {str(e)}'
+        socketio.emit('script_update', {'script_name': script_name, 'status': script_status[script_name]})
+
     finally:
         if script_name in script_status and 'Running' in script_status[script_name]:
             script_status[script_name] = f'Completed (URLs scraped: {url_count})'
@@ -178,39 +316,47 @@ def status():
 
 @app.route('/schedule_scripts', methods=['POST'])
 def schedule_scripts():
-    global stop_execution
     try:
-        global global_state
-        with state_lock:
-            global_state['run_button_disabled'] = True
-            global_state['stop_button_disabled'] = True
-            global_state['schedule_button_disabled'] = True
-            global_state['stop_schedule_button_disabled'] = False
-
-        stop_execution = False
         scripts = request.form.getlist('scripts')
         start_date = request.form.get('start-date')
         start_time = request.form.get('start-time')
         recurrence_type = request.form.get('recurrence-type')
 
-        unique_scripts = list(set(scripts))
-        scheduled_scripts = []
+        run_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        run_time = datetime.strptime(start_time, '%H:%M').time()
 
-        for script in unique_scripts:
-            if recurrence_type == 'monthly':
-                schedule_monthly_task(script, start_date, start_time, run_script)
-            else:
-                schedule_task(script, start_date, start_time, run_script)
+        scheduled_scripts = []
+        for script in scripts:
+            new_task = ScheduledTask(
+                id=str(uuid.uuid4()),
+                script_name=script,
+                run_date=run_date,
+                run_time=run_time,
+                recurrence_type=recurrence_type,
+                status='Scheduled'
+            )
+            db.session.add(new_task)
             scheduled_scripts.append(script)
 
+            # Schedule the task
+            if recurrence_type == 'monthly':
+                task = schedule_monthly_task(script, start_date, start_time, run_script)
+            else:
+                task = schedule_task(script, start_date, start_time, run_script)
+
+            if task is None:
+                return jsonify({'status': f'Error scheduling script: {script}'}), 500
+
+        db.session.commit()
+
+        status = f'Scheduled {scheduled_scripts} for {start_date} at {start_time}'
         if recurrence_type == 'monthly':
             status = f'Scheduled {scheduled_scripts} monthly from {start_date} at {start_time}'
-        else:
-            status = f'Scheduled {scheduled_scripts} for {start_date} at {start_time}'
 
-        # Return the updated task list immediately
-        tasks = get_scheduled_tasks()
-        return jsonify({'status': status, 'tasks': tasks})
+        tasks = ScheduledTask.query.all()
+        # Emit WebSocket event to all clients immediately
+        socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in tasks]})
+        return jsonify({'status': status, 'tasks': [task.to_dict() for task in tasks]})
     except Exception as e:
         logging.error(f"Error scheduling script: {str(e)}")
         return jsonify({'status': f'Error scheduling script: {str(e)}'}), 500
@@ -230,8 +376,17 @@ def schedule_scripts():
 @app.route('/stop_scheduled_scripts', methods=['POST'])
 def stop_scheduled_scripts():
     try:
-        response = stop_scheduled_task()
-        return response
+        script_name = request.form.get('script_name')
+        if script_name:
+            tasks = ScheduledTask.query.filter_by(script_name=script_name).all()
+            for task in tasks:
+                task.status = 'Cancelled'
+            db.session.commit()
+            return jsonify({'status': f'Scheduled task(s) for {script_name} cancelled'})
+        else:
+            ScheduledTask.query.update({ScheduledTask.status: 'Cancelled'})
+            db.session.commit()
+            return jsonify({'status': 'All scheduled tasks stopped.'})
     except Exception as e:
         logging.error(f"Error stopping scheduled tasks: {str(e)}")
         return jsonify({'status': f'Error stopping scheduled tasks: {str(e)}'}), 500
@@ -304,8 +459,8 @@ def check_running_scripts():
 @app.route('/get_scheduled_tasks', methods=['GET'])
 def get_scheduled_tasks_route():
     try:
-        tasks = get_scheduled_tasks()
-        return jsonify(tasks)
+        tasks = ScheduledTask.query.all()
+        return jsonify([task.to_dict() for task in tasks])
     except Exception as e:
         logging.error(f"Error getting scheduled tasks: {str(e)}")
         return jsonify({'status': f'Error getting scheduled tasks: {str(e)}'}), 500
@@ -321,4 +476,10 @@ def settings():
 
 
 if __name__ == '__main__':
-    app.run(host='192.168.199.135', port=5000, debug=True)
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+
+    # socketio = SocketIO(app)
+    socketio.run(app, host='192.168.0.161', port=5000, debug=True)
+
