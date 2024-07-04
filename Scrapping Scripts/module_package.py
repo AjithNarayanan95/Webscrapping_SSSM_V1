@@ -7,10 +7,12 @@ import re
 import os
 import time
 from datetime import datetime
-from zenrows import ZenRowsClient
+import time
+from DrissionPage import ChromiumPage
+import urllib3
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
 
-
-zenrows_api_key = ''
 
 
 def clean_header(head):
@@ -60,10 +62,14 @@ def log_retry_failure(url, error_type):
         file.write(f'{url}, {error_type}\n')
 
 
+ses = requests.Session()
+
+
 @retry
 def get_soup_verify(url, headers=None):
     try:
-        ses = requests.session()
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        warnings.filterwarnings('ignore', category=InsecureRequestWarning)
         r = ses.get(url, headers=headers, timeout=500, verify=False)
     except requests.exceptions.Timeout:
         print(f'Timeout error for URL: {url}')
@@ -92,16 +98,16 @@ def get_soup_verify(url, headers=None):
                 time.sleep(count * 2)
                 status_log(response=r, url=r.url)
                 return None
-        
+
     else:
         status_log(response=r, url=r.url)
         return None
 
 
+
 @retry
 def get_soup(url, headers=None):
     try:
-        ses = requests.session()
         r = ses.get(url, headers=headers, timeout=500)
     except requests.exceptions.Timeout:
         print(f'Timeout error for URL: {url}')
@@ -138,7 +144,6 @@ def get_soup(url, headers=None):
 @retry
 def post_soup(url, headers=None, payload=None):
     try:
-        ses = requests.session()
         r = ses.post(url, headers=headers, json=payload, timeout=500)
     except requests.exceptions.Timeout:
         print(f'Timeout error for URL: {url}')
@@ -175,7 +180,6 @@ def post_soup(url, headers=None, payload=None):
 @retry
 def get_json_response(url, headers=None):
     try:
-        ses = requests.session()
         r = ses.get(url, headers=headers, timeout=500)
     except requests.exceptions.Timeout:
         print(f'Timeout error for URL: {url}')
@@ -212,7 +216,6 @@ def get_json_response(url, headers=None):
 @retry
 def post_json_response(url, headers=None, payload=None):
     try:
-        ses = requests.session()
         r = ses.post(url, headers=headers, json=payload, timeout=500)
     except requests.exceptions.Timeout:
         print(f'Timeout error for URL: {url}')
@@ -244,56 +247,25 @@ def post_json_response(url, headers=None, payload=None):
         return None
 
 
-@retry
-def get_zenrowa(url, params=None):
-    try:
-        client = ZenRowsClient(zenrows_api_key)
-        r = client.get(url, params=params)
-    except requests.exceptions.Timeout:
-        print(f'Timeout error for URL: {url}')
-        status_log(url=url)
-        return None
-    if r.status_code == 200:
-        soup = BeautifulSoup(r.text, 'html.parser')
-        return soup
-    elif 499 >= r.status_code >= 400:
-        print(f'client error response, status code {r.status_code} \nrefer: {r.url}')
-        status_log(response=r, url=r.url)
-        return None
-    elif 599 >= r.status_code >= 500:
-        print(f'server error response, status code {r.status_code} \nrefer: {r.url}')
-        count = 1
-        while count != 10:
-            print('while', count)
-            client = ZenRowsClient('52e9cd0e048a062fba225a28c885b96cc873feb7')
-            r = client.get(url, params=params)
-            print('status_code: ', r.status_code)
-            if r.status_code == 200:
-                soup = BeautifulSoup(r.text, 'html.parser')
-                return soup
-            else:
-                print('retry ', count)
-                count += 1
-                time.sleep(count * 2)
-                status_log(response=r, url=r.url)
-                return None
-    else:
-        status_log(response=r, url=r.url)
-        return None
+class CloudflareBypasser:
+    def __init__(self, driver: ChromiumPage):
+        self.driver = driver
 
+    def clickCycle(self):
+        if self.driver.wait.ele_displayed('xpath://div/iframe',timeout=1.5):
+            time.sleep(1.5)
+            self.driver('xpath://div/iframe').ele("Verify you are human", timeout=2.5).click()
 
+    def isBypassed(self):
+        title = self.driver.title.lower()
+        return "just a moment" not in title
 
-
-def get_dictionary(product_ids=None, product_names=None, product_quantities=None, product_prices=None,
-                   product_urls=None):
-    dictionary_1 = {
-        'product_id': product_ids,
-        'product_name': product_names,
-        'product_quantity': product_quantities,
-        'product_price': product_prices,
-        'product_url': product_urls
-    }
-    return dictionary_1
+    def bypass(self):
+        while not self.isBypassed():
+            time.sleep(2)
+            print("Verification page detected.  Trying to bypass...")
+            time.sleep(2)
+            self.clickCycle()
 
 
 def strip_it(text):

@@ -420,10 +420,19 @@
             console.log('Connected to server');
         });
 
+        socket.on('tasks_updated', function(data) {
+    console.log('Received tasks update:', data);
+    updateScheduledTaskDisplay(data.tasks);
+});
+
         socket.on('state_update', (state) => {
-            console.log('Received state update:', state);
-            updateButtonStates(state);
-        });
+    console.log('Received state update:', state);
+    if (state && Object.keys(state).length > 0) {
+        updateButtonStates(state);
+    } else {
+        console.warn('Received empty state update');
+    }
+});
 
         socket.on('script_update', (data) => {
             console.log('Received script update:', data);
@@ -581,12 +590,12 @@ document.getElementById('schedule-button').addEventListener('click', function() 
             if (data.status.startsWith('Scheduled')) {
                 updateScheduledTaskDisplay(data.tasks);
                 displayScheduledTask(data.status);
-                updateButtonStates({
-                    run_button_disabled: true,
-                    stop_button_disabled: true,
-                    schedule_button_disabled: true,
-                    stop_schedule_button_disabled: false
-                });
+<!--                updateButtonStates({-->
+<!--                    run_button_disabled: true,-->
+<!--                    stop_button_disabled: true,-->
+<!--                    schedule_button_disabled: true,-->
+<!--                    stop_schedule_button_disabled: false-->
+<!--                });-->
                 document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
                     checkbox.disabled = true;
                 });
@@ -690,7 +699,7 @@ function updateStatus() {
 
 
 document.getElementById('stop-schedule-button').addEventListener('click', function() {
-    socket.emit('stop_all')
+    socket.emit('stop_all');
     fetch(`${baseUrl}/stop_all`, {
         method: 'POST',
         headers: {
@@ -701,32 +710,10 @@ document.getElementById('stop-schedule-button').addEventListener('click', functi
     .then(response => response.json())
     .then(data => {
         console.log("Stop all response:", data);
-        if (data.status === 'All scheduled tasks and running scripts have been stopped.' ||
-            data.status === 'Stopped') {
+        if (data.status === 'All scheduled tasks and running scripts have been stopped.') {
             alert(data.status);
             updateScheduledTaskDisplay([]);
-            pollStatus();
-            document.getElementById('scheduled-task-info').textContent = '';
-            document.getElementById('scheduled-task-display').style.display = 'none';
-
-            updateButtonStates({
-                run_button_disabled: false,
-                stop_button_disabled: true,
-                schedule_button_disabled: false,
-                stop_schedule_button_disabled: true
-            });
-
-            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-                checkbox.disabled = false;
-            });
-
-
-            updateState();
-            saveState();
-
-            alert(data.status);
         } else {
-            pollStatus();
             console.error('Unexpected response when stopping all tasks and scripts:', data.status);
             alert('Unexpected response when stopping all tasks and scripts: ' + data.status);
         }
@@ -734,7 +721,6 @@ document.getElementById('stop-schedule-button').addEventListener('click', functi
     .catch(error => {
         console.error('Error stopping all tasks and scripts:', error);
         alert('An error occurred while stopping tasks and scripts. Please try again.');
-        // If there's an error, fetch the current state
         fetch(`${baseUrl}/get_state`)
             .then(response => response.json())
             .then(state => {
@@ -757,12 +743,19 @@ function pollStatus() {
         updateScheduledTaskDisplay(tasksData);
         updateButtonStates(statusData);
 
-        // Continue polling
         setTimeout(pollStatus, 1000);
     })
     .catch(error => {
         console.error('Error polling status:', error);
         setTimeout(pollStatus, 1000);
+    });
+}
+
+function updateConsoles(statusData) {
+    Object.keys(statusData).forEach(scriptName => {
+        let status = statusData[scriptName];
+        let urlCount = extractUrlCount(status);
+        createOrUpdateConsoleDiv(scriptName, status, urlCount);
     });
 }
 
@@ -772,18 +765,47 @@ function updateScheduledTaskDisplay(tasks) {
 
     if (tasks && tasks.length > 0) {
         let tasksInfo = tasks.map(task =>
-            `${task.script_name} scheduled for ${task.run_date} at ${task.run_time}`
+            `${task.script_name} scheduled for ${task.run_date} at ${task.run_time} (${task.status})`
         ).join(', ');
         scheduledTaskInfo.textContent = tasksInfo;
         scheduledTaskDisplay.style.display = 'block';
+
+        updateButtonStates({
+            run_button_disabled: true,
+            stop_button_disabled: true,
+            schedule_button_disabled: true,
+            stop_schedule_button_disabled: false
+        });
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.disabled = true;
+        });
     } else {
         scheduledTaskInfo.textContent = '';
         scheduledTaskDisplay.style.display = 'none';
+
+        updateButtonStates({
+            run_button_disabled: false,
+            stop_button_disabled: true,
+            schedule_button_disabled: false,
+            stop_schedule_button_disabled: true
+        });
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.disabled = false;
+        });
     }
+
+    updateState();
+    saveState();
 }
 
 function updateState(newState) {
     console.log("Sending state update:", newState);
+    if (!newState || Object.keys(newState).length === 0) {
+        console.warn("Attempted to update state with empty object");
+        return;
+    }
     fetch(`${baseUrl}/update_state`, {
         method: 'POST',
         headers: {
@@ -793,7 +815,7 @@ function updateState(newState) {
     })
     .then(response => {
         if (!response.ok) {
-            return response.text().then(text => { throw new Error(text) })
+            return response.text().then(text => { throw new Error(`HTTP error! status: ${response.status}, message: ${text}`) })
         }
         return response.json();
     })

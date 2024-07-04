@@ -1,18 +1,21 @@
 import re
-from DrissionPage import ChromiumPage, ChromiumOptions
+from DrissionPage import ChromiumOptions
 from module_package import *
 import math
-from zenrows import ZenRowsClient
 
 
 def write_visited_log(url):
-    with open(f'Visited_VWR_urls.txt', 'a', encoding='utf-8') as file:
+    output_dir = os.path.join('Scrapping Scripts', 'Output', 'temp')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    file_path = os.path.join(output_dir, 'Visited_vwr_urls.txt')
+    with open(file_path, 'a', encoding='utf-8') as file:
         file.write(f'{url}\n')
 
-
 def read_log_file():
-    if os.path.exists(f'Visited_VWR_urls.txt'):
-        with open(f'Visited_VWR_urls.txt', 'r', encoding='utf-8') as read_file:
+    file_path = os.path.join('Scrapping Scripts', 'Output', 'temp', 'Visited_vwr_urls.txt')
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as read_file:
             return read_file.read().split('\n')
     return []
 
@@ -22,6 +25,7 @@ if __name__ == '__main__':
     file_name = 'VWR_WARDS_Products'
     url = 'https://us.vwr.com/store/catalog/vwr_products.jsp'
     base_url = 'https://us.vwr.com'
+    all_data = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     }
@@ -33,8 +37,6 @@ if __name__ == '__main__':
             product_category = single_url.text.strip()
             main_url = f'{base_url}{single_url["href"]}'
             print(f'main_url---------------->{main_url}')
-            if main_url in read_log_file():
-                continue
             inner_request = get_soup(main_url, headers)
             if inner_request is None:
                 continue
@@ -50,8 +52,6 @@ if __name__ == '__main__':
                     page_link = f'{main_url}?pageNo={i}'
                     page_req = requests.get(page_link, headers=headers)
                     if page_req.status_code == 403:
-                        if page_link in read_log_file():
-                            continue
                         print(f'page_link---------->{page_link}')
                         browser_path = "/usr/bin/google-chrome"
                         options = ChromiumOptions()
@@ -72,7 +72,7 @@ if __name__ == '__main__':
                         ]
                         for argument in arguments:
                             options.set_argument(argument)
-                        driver = ChromiumPage(addr_driver_opts=options)
+                        driver = ChromiumPage(addr_or_opts=options)
                         driver.get(page_link)
                         cf_bypasser = CloudflareBypasser(driver)
                         cf_bypasser.bypass()
@@ -112,7 +112,7 @@ if __name__ == '__main__':
                                             if 'Each' in extract_tag:
                                                 product_quantity = '1'
                                             else:
-                                                product_quantity = re.search('\d+', str(extract_tag)).group()
+                                                product_quantity = re.search('\\d+', str(extract_tag)).group()
                                         except:
                                             product_quantity = '1'
                                         try:
@@ -139,8 +139,6 @@ if __name__ == '__main__':
                                             product_name = main_name
                                         '''PRODUCT ID'''
                                         product_id = strip_it(product_item.text)
-                                        if product_id in read_log_file():
-                                            continue
                                         id_tag = product_item.find('span')['id'].replace("['", '').replace("']", '').split('_', 1)[-1].split('_', 1)[0].strip()
                                         product_req_url = f'https://us.vwr.com/store/services/pricing/json/skuPricing.jsp?skuIds={id_tag}&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false'
                                         price_request = get_json_response(product_req_url, headers)
@@ -160,15 +158,15 @@ if __name__ == '__main__':
                                                 'VWR_image_url': vwr_image_url,
                                                 'VWR_product_desc': product_desc
                                             }
-                                            articles_df = pd.DataFrame([dictionary])
+                                            all_data.append(dictionary)
+                                            articles_df = pd.DataFrame(all_data)
                                             articles_df.drop_duplicates(subset=['VWR_product_id', 'VWR_product_name'], keep='first',
                                                                         inplace=True)
-                                            if os.path.isfile(f'{file_name}.csv'):
-                                                articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                                            else:
-                                                articles_df.to_csv(f'{file_name}.csv', index=False)
-                                            write_visited_log(product_id)
-                        write_visited_log(page_link)
+                                            output_dir = 'Scrapping Scripts/Output'
+                                            if not os.path.exists(output_dir):
+                                                os.makedirs(output_dir)
+                                            file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                            articles_df.to_csv(file_path, index=False)
                     if page_req.status_code == 200:
                         page_soup = get_soup(page_link, headers)
                         if page_soup is None:
@@ -209,7 +207,7 @@ if __name__ == '__main__':
                                         if 'Each' in extract_tag:
                                             product_quantity = '1'
                                         else:
-                                            product_quantity = re.search('\d+', str(extract_tag)).group()
+                                            product_quantity = re.search('\\d+', str(extract_tag)).group()
                                     except:
                                         product_quantity = '1'
                                     try:
@@ -236,8 +234,6 @@ if __name__ == '__main__':
                                         product_name = main_name
 
                                     product_id = strip_it(product_item.text)
-                                    if product_id in read_log_file():
-                                        continue
                                     id_tag = product_item.find('span')['id'].replace("['", '').replace("']", '').split('_', 1)[
                                         -1].split('_', 1)[0].strip()
                                     product_req_url = f'https://us.vwr.com/store/services/pricing/json/skuPricing.jsp?skuIds={id_tag}&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false'
@@ -258,13 +254,13 @@ if __name__ == '__main__':
                                             'VWR_image_url': vwr_image_url,
                                             'VWR_product_desc': product_desc
                                         }
-                                        articles_df = pd.DataFrame([dictionary])
+                                        all_data.append(dictionary)
+                                        articles_df = pd.DataFrame(all_data)
                                         articles_df.drop_duplicates(subset=['VWR_product_id', 'VWR_product_name'],
                                                                     keep='first',
                                                                     inplace=True)
-                                        if os.path.isfile(f'{file_name}.csv'):
-                                            articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                                        else:
-                                            articles_df.to_csv(f'{file_name}.csv', index=False)
-                                        write_visited_log(product_id)
-            write_visited_log(main_url)
+                                        output_dir = 'Scrapping Scripts/Output'
+                                        if not os.path.exists(output_dir):
+                                            os.makedirs(output_dir)
+                                        file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                        articles_df.to_csv(file_path, index=False)

@@ -4,22 +4,27 @@ from module_package import *
 
 
 def write_visited_log(url):
-    with open(f'Visited_Wardsci_urls.txt', 'a', encoding='utf-8') as file:
+    output_dir = os.path.join('Scrapping Scripts', 'Output', 'temp')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    file_path = os.path.join(output_dir, 'Visited_Wardsci_urls.txt')
+    with open(file_path, 'a', encoding='utf-8') as file:
         file.write(f'{url}\n')
 
-
 def read_log_file():
-    if os.path.exists(f'Visited_Wardsci_urls.txt'):
-        with open(f'Visited_Wardsci_urls.txt', 'r', encoding='utf-8') as read_file:
+    file_path = os.path.join('Scrapping Scripts', 'Output', 'temp', 'Visited_Wardsci_urls.txt')
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as read_file:
             return read_file.read().split('\n')
     return []
 
 
 if __name__ == '__main__':
     timestamp = datetime.now().date().strftime('%Y%m%d')
-    file_name = 'Wardsci_products'
+    file_name = 'Wardsci_Products'
     url = 'https://www.wardsci.com/cms/products'
     base_url = 'https://www.wardsci.com'
+    all_data = []
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     }
@@ -29,8 +34,6 @@ if __name__ == '__main__':
         product_category = single_content.find('h6').text.strip()
         main_url = f"{base_url}{single_content.a['href']}"
         print(f'main_url----------------> {main_url}')
-        if main_url in read_log_file():
-            continue
         inner_req = get_soup(main_url, headers)
         if inner_req is None:
             continue
@@ -108,7 +111,7 @@ if __name__ == '__main__':
                                                         if 'Each' in str(quantity):
                                                             product_quantity = '1'
                                                         else:
-                                                            product_quantity = re.search('\d+', str(quantity)).group()
+                                                            product_quantity = re.search('\\d+', str(quantity)).group()
                                                     except:
                                                         product_quantity = ''
                                                     '''PRODUCT ID'''
@@ -147,8 +150,6 @@ if __name__ == '__main__':
                                                                 ' , ').strip()
                                                     except:
                                                         product_name = main_name
-                                                    if product_id in read_log_file():
-                                                        continue
                                                     product_req_url = f'https://www.wardsci.com/store/services/pricing/json/skuPricing.jsp?skuIds={id_tag}&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false'
                                                     price_request = get_json_response(product_req_url, headers)
                                                     if price_request is None:
@@ -167,17 +168,17 @@ if __name__ == '__main__':
                                                             'Wardsci_image_url': image_url,
                                                             'Wardsci_product_desc': description
                                                         }
-                                                        articles_df = pd.DataFrame([dictionary])
+                                                        all_data.append(dictionary)
+                                                        articles_df = pd.DataFrame(all_data)
                                                         articles_df.drop_duplicates(
                                                             subset=['Wardsci_product_id', 'Wardsci_product_name'],
                                                             keep='first',
                                                             inplace=True)
-                                                        if os.path.isfile(f'{file_name}.csv'):
-                                                            articles_df.to_csv(f'{file_name}.csv', index=False,
-                                                                               header=False, mode='a')
-                                                        else:
-                                                            articles_df.to_csv(f'{file_name}.csv', index=False)
-                                                        write_visited_log(product_id)
+                                                        output_dir = 'Scrapping Scripts/Output'
+                                                        if not os.path.exists(output_dir):
+                                                            os.makedirs(output_dir)
+                                                        file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                                        articles_df.to_csv(file_path, index=False)
                     else:
                         product_sub_category = f'{sub_category} - {inner_category}'
                         if other_request.find('div', class_='left'):
@@ -223,7 +224,7 @@ if __name__ == '__main__':
                                                     if 'Each' in str(quantity):
                                                         product_quantity = '1'
                                                     else:
-                                                        product_quantity = re.search('\d+', str(quantity)).group()
+                                                        product_quantity = re.search('\\d+', str(quantity)).group()
                                                 except:
                                                     product_quantity = ''
                                                 '''PRODUCT ID'''
@@ -261,8 +262,6 @@ if __name__ == '__main__':
                                                             ' , ').strip()
                                                 except:
                                                     product_name = main_name
-                                                if product_id in read_log_file():
-                                                    continue
                                                 product_req_url = f'https://www.wardsci.com/store/services/pricing/json/skuPricing.jsp?skuIds={id_tag}&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false'
                                                 # print(product_req_url)
                                                 price_request = get_json_response(product_req_url, headers)
@@ -282,17 +281,18 @@ if __name__ == '__main__':
                                                         'Wardsci_image_url': image_url,
                                                         'Wardsci_product_desc': description
                                                     }
-                                                    articles_df = pd.DataFrame([dictionary])
+                                                    all_data.append(dictionary)
+                                                    articles_df = pd.DataFrame(all_data)
                                                     articles_df.drop_duplicates(
                                                         subset=['Wardsci_product_id', 'Wardsci_product_name'],
                                                         keep='first',
                                                         inplace=True)
-                                                    if os.path.isfile(f'{file_name}.csv'):
-                                                        articles_df.to_csv(f'{file_name}.csv', index=False,
-                                                                           header=False, mode='a')
-                                                    else:
-                                                        articles_df.to_csv(f'{file_name}.csv', index=False)
-                                                    write_visited_log(product_id)
+                                                    output_dir = 'Scrapping Scripts/Output'
+                                                    if not os.path.exists(output_dir):
+                                                        os.makedirs(output_dir)
+                                                    file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                                    articles_df.to_csv(file_path, index=False)
+
             else:
                 product_sub_category = sub_category
                 if content_request.find('div', class_='left'):
@@ -337,7 +337,7 @@ if __name__ == '__main__':
                                             if 'Each' in str(quantity):
                                                 product_quantity = '1'
                                             else:
-                                                product_quantity = re.search('\d+', str(quantity)).group()
+                                                product_quantity = re.search('\\d+', str(quantity)).group()
                                         except:
                                             product_quantity = ''
                                         '''PRODUCT ID'''
@@ -373,8 +373,7 @@ if __name__ == '__main__':
                                                 product_name = product_name.replace(' , , ', ', ').strip(' , ').strip()
                                         except:
                                             product_name = main_name
-                                        if product_id in read_log_file():
-                                            continue
+
                                         product_req_url = f'https://www.wardsci.com/store/services/pricing/json/skuPricing.jsp?skuIds={id_tag}&salesOrg=8000&salesOffice=0000&profileLocale=en_US&promoCatalogNumber=&promoCatalogNumberForSkuId=&forcePromo=false'
                                         # print(product_req_url)
                                         price_request = get_json_response(product_req_url, headers)
@@ -394,15 +393,14 @@ if __name__ == '__main__':
                                                 'Wardsci_image_url': image_url,
                                                 'Wardsci_product_desc': description
                                             }
-                                            articles_df = pd.DataFrame([dictionary])
+                                            all_data.append(dictionary)
+                                            articles_df = pd.DataFrame(all_data)
                                             articles_df.drop_duplicates(
                                                 subset=['Wardsci_product_id', 'Wardsci_product_name'],
                                                 keep='first',
                                                 inplace=True)
-                                            if os.path.isfile(f'{file_name}.csv'):
-                                                articles_df.to_csv(f'{file_name}.csv', index=False,
-                                                                   header=False, mode='a')
-                                            else:
-                                                articles_df.to_csv(f'{file_name}.csv', index=False)
-                                            write_visited_log(product_id)
-        write_visited_log(main_url)
+                                            output_dir = 'Scrapping Scripts/Output'
+                                            if not os.path.exists(output_dir):
+                                                os.makedirs(output_dir)
+                                            file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                            articles_df.to_csv(file_path, index=False)

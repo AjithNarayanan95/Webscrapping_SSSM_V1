@@ -1,7 +1,6 @@
 from module_package import *
 import math
 
-
 '''PRODUCT NAME'''
 
 
@@ -61,22 +60,27 @@ def get_product_id(single_content):
 
 
 def write_visited_log(url):
-    with open(f'Visited_Frey_urls.txt', 'a', encoding='utf-8') as file:
+    output_dir = os.path.join('Scrapping Scripts', 'Output', 'temp')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    file_path = os.path.join(output_dir, 'Visited_Frey_urls.txt')
+    with open(file_path, 'a', encoding='utf-8') as file:
         file.write(f'{url}\n')
 
-
 def read_log_file():
-    if os.path.exists(f'Visited_Frey_urls.txt'):
-        with open(f'Visited_Frey_urls.txt', 'r', encoding='utf-8') as read_file:
+    file_path = os.path.join('Scrapping Scripts', 'Output', 'temp', 'Visited_Frey_urls.txt')
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as read_file:
             return read_file.read().split('\n')
     return []
 
 
 if __name__ == '__main__':
     timestamp = datetime.now().date().strftime('%Y%m%d')
-    file_name = 'Frey_products'
+    file_name = 'Frey_Products'
     url = 'https://schoolspecialty.com/'
     base_url = 'https://schoolspecialty.com'
+    all_data = []
     cookies = {
         '_fbp': 'fb.1.1713871737044.384901192',
         'BVBRANDID': 'acf65f4f-f6af-414f-955b-e4dc3252dd5b',
@@ -167,15 +171,15 @@ if __name__ == '__main__':
             main_url = f"{base_url}{products.a['href']}"
             if 'shop-by-learning-environment/' in str(products):
                 main_url = f"{base_url}{products.a['href']}"
-                if main_url in read_log_file():
-                    continue
+                # if main_url in read_log_file():
+                #     continue
                 sub_request = get_soup_verify(main_url, headers)
                 if sub_request is None:
                     continue
                 for other_content in sub_request.find_all('div', class_='ssi-card-container'):
                     inner_href = other_content.a['href']
                     if 'http' not in str(inner_href):
-                        inner_url = f"{base_url}{inner_href}"
+                        inner_url = f'{base_url}{inner_href}'
                     else:
                         inner_url = inner_href
                     inner_request = get_soup_verify(inner_url, headers)
@@ -219,13 +223,13 @@ if __name__ == '__main__':
                                 'disableProductCompare': 'false',
                                 'langId': '-1',
                                 'facet': '',
-                                'categoryId': f"{page_id}",
+                                'categoryId': f'{page_id}',
                                 'parent_category_rn': '3074457345616724775',
                             }
                             payload = {
                                 'contentBeginIndex': '0',
-                                'productBeginIndex': f"{page_nav}",
-                                'beginIndex': f"{page_nav}",
+                                'productBeginIndex': f'{page_nav}',
+                                'beginIndex': f'{page_nav}',
                                 'orderBy': '',
                                 'facetId': '',
                                 'pageView': '',
@@ -271,9 +275,20 @@ if __name__ == '__main__':
                                 product_price = get_product_price(single_content)
                                 product_quantity = get_product_quantity(single_content)
                                 product_id = get_product_id(single_content)
+                                product_request = get_soup_verify(product_url, headers)
+                                '''DESCRIPTION'''
+                                try:
+                                    product_desc = product_request.find('div', class_='long-description')
+                                    if product_desc.find('h2'):
+                                        extract_tag = product_desc.find('h2').extract()
+                                    else:
+                                        extract_tag = ''
+                                    product_desc = strip_it(product_desc.text)
+                                except:
+                                    product_desc = ''
                                 print(product_url)
-                                if product_id in read_log_file():
-                                    continue
+                                # if product_id in read_log_file():
+                                #     continue
                                 print('current datetime------>', datetime.now())
                                 dictionary = {
                                     'Frey_product_category': product_category,
@@ -283,17 +298,19 @@ if __name__ == '__main__':
                                     'Frey_product_quantity': product_quantity,
                                     'Frey_product_price': product_price,
                                     'Frey_product_url': product_url,
-                                    'Frey_image_url': frey_image_url
+                                    'Frey_image_url': frey_image_url,
+                                    'Frey_product_desc': product_desc
                                 }
-                                articles_df = pd.DataFrame([dictionary])
+                                all_data.append(dictionary)
+                                articles_df = pd.DataFrame(all_data)
                                 articles_df.drop_duplicates(subset=['Frey_product_id', 'Frey_product_name'],
                                                             keep='first',
                                                             inplace=True)
-                                if os.path.isfile(f"{file_name}.csv"):
-                                    articles_df.to_csv(f"{file_name}.csv", index=False, header=False, mode='a')
-                                else:
-                                    articles_df.to_csv(f"{file_name}.csv", index=False)
-                                write_visited_log(product_id)
+                                output_dir = 'Scrapping Scripts/Output'
+                                if not os.path.exists(output_dir):
+                                    os.makedirs(output_dir)
+                                file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                articles_df.to_csv(file_path, index=False)
 
                     else:
                         content_url = inner_request.find_all('div', class_='product product-container')
@@ -304,9 +321,18 @@ if __name__ == '__main__':
                             product_price = get_product_price(single_content)
                             product_quantity = get_product_quantity(single_content)
                             product_id = get_product_id(single_content)
+                            product_request = get_soup_verify(product_url, headers)
+                            '''DESCRIPTION'''
+                            try:
+                                product_desc = product_request.find('div', class_='long-description')
+                                if product_desc.find('h2'):
+                                    extract_tag = product_desc.find('h2').extract()
+                                else:
+                                    extract_tag = ''
+                                product_desc = strip_it(product_desc.text)
+                            except:
+                                product_desc = ''
                             print(product_url)
-                            if product_id in read_log_file():
-                                continue
                             print('current datetime------>', datetime.now())
                             dictionary = {
                                 'Frey_product_category': product_category,
@@ -316,22 +342,21 @@ if __name__ == '__main__':
                                 'Frey_product_quantity': product_quantity,
                                 'Frey_product_price': product_price,
                                 'Frey_product_url': product_url,
-                                'Frey_image_url': frey_image_url
+                                'Frey_image_url': frey_image_url,
+                                'Frey_product_desc': product_desc
                             }
-                            articles_df = pd.DataFrame([dictionary])
+                            all_data.append(dictionary)
+                            articles_df = pd.DataFrame(all_data)
                             articles_df.drop_duplicates(subset=['Frey_product_id', 'Frey_product_name'], keep='first',
                                                         inplace=True)
-                            if os.path.isfile(f"{file_name}.csv"):
-                                articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                            else:
-                                articles_df.to_csv(f'{file_name}.csv', index=False)
-                            write_visited_log(product_id)
-                write_visited_log(main_url)
+                            output_dir = 'Scrapping Scripts/Output'
+                            if not os.path.exists(output_dir):
+                                os.makedirs(output_dir)
+                            file_path = os.path.join(output_dir, f'{file_name}.csv')
+                            articles_df.to_csv(file_path, index=False)
             else:
                 if 'ideas-resources' not in str(products):
                     main_url = f"{base_url}{products.a['href']}"
-                    if main_url in read_log_file():
-                        continue
                     inner_request = get_soup_verify(main_url, headers)
                     if inner_request is None:
                         continue
@@ -424,9 +449,18 @@ if __name__ == '__main__':
                                 product_price = get_product_price(single_content)
                                 product_quantity = get_product_quantity(single_content)
                                 product_id = get_product_id(single_content)
+                                product_request = get_soup_verify(product_url, headers)
+                                '''DESCRIPTION'''
+                                try:
+                                    product_desc = product_request.find('div', class_='long-description')
+                                    if product_desc.find('h2'):
+                                        extract_tag = product_desc.find('h2').extract()
+                                    else:
+                                        extract_tag = ''
+                                    product_desc = strip_it(product_desc.text)
+                                except:
+                                    product_desc = ''
                                 print(product_url)
-                                if product_id in read_log_file():
-                                    continue
                                 print('current datetime------>', datetime.now())
                                 dictionary = {
                                     'Frey_product_category': product_category,
@@ -436,17 +470,19 @@ if __name__ == '__main__':
                                     'Frey_product_quantity': product_quantity,
                                     'Frey_product_price': product_price,
                                     'Frey_product_url': product_url,
-                                    'Frey_image_url': frey_image_url
+                                    'Frey_image_url': frey_image_url,
+                                    'Frey_product_desc': product_desc
                                 }
-                                articles_df = pd.DataFrame([dictionary])
+                                all_data.append(dictionary)
+                                articles_df = pd.DataFrame(all_data)
                                 articles_df.drop_duplicates(subset=['Frey_product_id', 'Frey_product_name'],
                                                             keep='first',
                                                             inplace=True)
-                                if os.path.isfile(f'{file_name}.csv'):
-                                    articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                                else:
-                                    articles_df.to_csv(f'{file_name}.csv', index=False)
-                                write_visited_log(product_id)
+                                output_dir = 'Scrapping Scripts/Output'
+                                if not os.path.exists(output_dir):
+                                    os.makedirs(output_dir)
+                                file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                articles_df.to_csv(file_path, index=False)
                     else:
                         content_url = inner_request.find_all('div', class_='product product-container')
                         for single_content in content_url:
@@ -456,9 +492,18 @@ if __name__ == '__main__':
                             product_price = get_product_price(single_content)
                             product_quantity = get_product_quantity(single_content)
                             product_id = get_product_id(single_content)
+                            product_request = get_soup_verify(product_url, headers)
+                            '''DESCRIPTION'''
+                            try:
+                                product_desc = product_request.find('div', class_='long-description')
+                                if product_desc.find('h2'):
+                                    extract_tag = product_desc.find('h2').extract()
+                                else:
+                                    extract_tag = ''
+                                product_desc = strip_it(product_desc.text)
+                            except:
+                                product_desc = ''
                             print(product_url)
-                            if product_id in read_log_file():
-                                continue
                             print('current datetime------>', datetime.now())
                             dictionary = {
                                 'Frey_product_category': product_category,
@@ -468,14 +513,15 @@ if __name__ == '__main__':
                                 'Frey_product_quantity': product_quantity,
                                 'Frey_product_price': product_price,
                                 'Frey_product_url': product_url,
-                                'Frey_image_url': frey_image_url
+                                'Frey_image_url': frey_image_url,
+                                'Frey_product_desc': product_desc
                             }
-                            articles_df = pd.DataFrame([dictionary])
+                            all_data.append(dictionary)
+                            articles_df = pd.DataFrame(all_data)
                             articles_df.drop_duplicates(subset=['Frey_product_id', 'Frey_product_name'], keep='first',
                                                         inplace=True)
-                            if os.path.isfile(f'{file_name}.csv'):
-                                articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                            else:
-                                articles_df.to_csv(f'{file_name}.csv', index=False)
-                            write_visited_log(product_id)
-                    write_visited_log(main_url)
+                            output_dir = 'Scrapping Scripts/Output'
+                            if not os.path.exists(output_dir):
+                                os.makedirs(output_dir)
+                            file_path = os.path.join(output_dir, f'{file_name}.csv')
+                            articles_df.to_csv(file_path, index=False)

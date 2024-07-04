@@ -4,20 +4,25 @@ from module_package import *
 
 
 def write_visited_log(url):
-    with open(f'Visited_Fisher_urls.txt', 'a', encoding='utf-8') as file:
+    output_dir = os.path.join('Scrapping Scripts', 'Output', 'temp')
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    file_path = os.path.join(output_dir, 'Visited_Fisher_urls.txt')
+    with open(file_path, 'a', encoding='utf-8') as file:
         file.write(f'{url}\n')
 
-
 def read_log_file():
-    if os.path.exists(f'Visited_Fisher_urls.txt'):
-        with open(f'Visited_Fisher_urls.txt', 'r', encoding='utf-8') as read_file:
+    file_path = os.path.join('Scrapping Scripts', 'Output', 'temp', 'Visited_Fisher_urls.txt')
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as read_file:
             return read_file.read().split('\n')
     return []
 
 
+
 if __name__ == '__main__':
     timestamp = datetime.now().date().strftime('%Y%m%d')
-    file_name = 'Fisher_products'
+    file_name = 'Fisher_Products'
     all_data = []
     url = 'https://www.fishersci.com/us/en/browse/products'
     base_url = 'https://www.fishersci.com'
@@ -138,8 +143,6 @@ if __name__ == '__main__':
             href_split = str(single_href).split('/browse/', 1)[-1].split('/', 1)[0].strip()
             main_url = f'{base_url}{single_href["href"]}'
             print(f'main_url---------->{main_url}')
-            if main_url in read_log_file():
-                continue
             inner_request = get_soup(main_url, headers)
             if inner_request is None:
                 continue
@@ -162,7 +165,7 @@ if __name__ == '__main__':
                             other_content = product_request.find('table', class_='general_table product_table responsive_product_table').find_all('tbody', class_='itemRowContent')
                             for single_content in other_content:
                                 '''PRODUCT URL'''
-                                product_url = f'{base_url}{single_content.find('a', class_='chemical_fmly_glyph')['href']}'
+                                product_url = f"{base_url}{single_content.find('a', class_='chemical_fmly_glyph')['href']}"
                                 print(product_url)
                                 '''PRODUCT ID'''
                                 try:
@@ -204,11 +207,23 @@ if __name__ == '__main__':
                                 product_request = get_soup(product_url, headers)
                                 if product_request is None:
                                     continue
+                                '''DESCRIPTION'''
+                                try:
+                                    desc = product_request.find('div', class_='small-12 medium-12 large-12 columns')
+                                    desc_replace = str(desc).replace('<li', '• <li').replace('Description', '')
+                                    product_desc = strip_it(BeautifulSoup(desc_replace, 'html.parser').text.strip())
+                                except:
+                                    product_desc = ''
+                                '''IMAGE URL'''
+                                try:
+                                    fisher_image_url = product_request.find('img', id='productImage')['src']
+                                except:
+                                    fisher_image_url = ''
                                 '''OFFERS'''
                                 if product_request.find('span', attrs={'itemprop': 'offers'}):
                                     '''PRODUCT PRICE'''
                                     try:
-                                        product_price = f'$ {strip_it(product_request.find('span', attrs={'itemprop': 'offers'}).find('span', itemprop='price')['content'].strip())}'
+                                        product_price = f"$ {strip_it(product_request.find('span', attrs={'itemprop': 'offers'}).find('span', itemprop='price')['content'].strip())}"
                                     except:
                                         product_price = ''
                                     '''PRODUCT QUANTITY'''
@@ -217,13 +232,13 @@ if __name__ == '__main__':
                                             product_quantity = ''
                                         else:
                                             product_quantity = strip_it(product_request.find('span', attrs={'itemprop': 'offers'}).find('span', itemprop='unitText')['content'].replace('Each of 1', '1').replace('Each', '1').replace('Case of', '').replace('Pack of', '').replace('EA', '').strip())
-                                            product_quantity = re.search('\d+', str(product_quantity)).group()
+                                            product_quantity = re.search('\\d+', str(product_quantity)).group()
                                     except:
                                         product_quantity = ''
                                 else:
                                     '''PRODUCT PRICE'''
                                     try:
-                                        product_price = f'$ {strip_it(product_request.find('span', itemprop='price')['content'].strip())}'
+                                        product_price = f"$ {strip_it(product_request.find('span', itemprop='price')['content'].strip())}"
                                     except:
                                         product_price = ''
                                     '''PRODUCT QUANTITY'''
@@ -232,8 +247,8 @@ if __name__ == '__main__':
                                             product_quantity = ''
                                         else:
                                             product_quantity = strip_it(product_request.find('span', itemprop='price').find('span', itemprop='unitText')['content'].replace('Each of 1', '1').replace('Each', '1').replace('Case of', '').replace('Pack of', '').strip())
-                                            if re.search('\d+', str(product_quantity)).group():
-                                                product_quantity = re.search('\d+', str(product_quantity)).group()
+                                            if re.search('\\d+', str(product_quantity)).group():
+                                                product_quantity = re.search('\\d+', str(product_quantity)).group()
                                             else:
                                                 product_quantity = 1
                                     except:
@@ -246,17 +261,32 @@ if __name__ == '__main__':
                                     'Fisher_product_name': product_name,
                                     'Fisher_product_quantity': product_quantity,
                                     'Fisher_product_price': product_price,
-                                    'Fisher_product_url': product_url
+                                    'Fisher_product_url': product_url,
+                                    'Fisher_image_url': fisher_image_url,
+                                    'Fisher_product_desc': product_desc
                                 }
-                                articles_df = pd.DataFrame([dictionary])
+                                all_data.append(dictionary)
+                                articles_df = pd.DataFrame(all_data)
                                 articles_df.drop_duplicates(subset=['Fisher_product_id', 'Fisher_product_name'], keep='first',
                                                             inplace=True)
-                                if os.path.isfile(f'{file_name}.csv'):
-                                    articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                                else:
-                                    articles_df.to_csv(f'{file_name}.csv', index=False)
-                                write_visited_log(product_id)
+                                output_dir = 'Scrapping Scripts/Output'
+                                if not os.path.exists(output_dir):
+                                    os.makedirs(output_dir)
+                                file_path = os.path.join(output_dir, f'{file_name}.csv')
+                                articles_df.to_csv(file_path, index=False)
                         else:
+                            '''DESCRIPTION'''
+                            try:
+                                desc = product_request.find('div', class_='small-12 medium-12 large-12 columns')
+                                desc_replace = str(desc).replace('<li', '• <li').replace('Description', '')
+                                product_desc = strip_it(BeautifulSoup(desc_replace, 'html.parser').text.strip())
+                            except:
+                                product_desc = ''
+                            '''IMAGE URL'''
+                            try:
+                                fisher_image_url = product_request.find('img', id='productImage')['src']
+                            except:
+                                fisher_image_url = ''
                             product_content = product_request.find('div', id='ProductDescriptionContainer')
                             '''PRODUCT NAME'''
                             try:
@@ -291,7 +321,7 @@ if __name__ == '__main__':
                                 if product_content.find('span', attrs={'itemprop':'offers'}):
                                     '''PRODUCT PRICE'''
                                     try:
-                                        product_price = f'$ {strip_it(product_content.find('span', attrs={'itemprop':'offers'}).find('span', itemprop='price')['content'].strip())}'
+                                        product_price = f"$ {strip_it(product_content.find('span', attrs={'itemprop':'offers'}).find('span', itemprop='price')['content'].strip())}"
                                     except:
                                         product_price = ''
                                     '''PRODUCT QUANTITY'''
@@ -300,13 +330,13 @@ if __name__ == '__main__':
                                             product_quantity = ''
                                         else:
                                             product_quantity = strip_it(product_content.find('span', attrs={'itemprop':'offers'}).find('span', itemprop='unitText')['content'].replace('Each of 1', '1').replace('Each', '1').replace('Case of', '').replace('Pack of', '').replace('EA', '').strip())
-                                            product_quantity = re.search('\d+', str(product_quantity)).group()
+                                            product_quantity = re.search('\\d+', str(product_quantity)).group()
                                     except:
                                         product_quantity = ''
                                 else:
                                     '''PRODUCT PRICE'''
                                     try:
-                                        product_price = f'$ {strip_it(product_content.find('span', itemprop='price')['content'].strip())}'
+                                        product_price = f"$ {strip_it(product_content.find('span', itemprop='price')['content'].strip())}"
                                     except:
                                         product_price = ''
                                     '''PRODUCT QUANTITY'''
@@ -315,11 +345,9 @@ if __name__ == '__main__':
                                             product_quantity = ''
                                         else:
                                             product_quantity = strip_it(product_content.find('span', itemprop='price').find('span', itemprop='unitText')['content'].replace('Each of 1', '1').replace('Each', '1').replace('Case of', '').replace('Pack of', '').strip())
-                                            product_quantity = re.search('\d+', str(product_quantity)).group()
+                                            product_quantity = re.search('\\d+', str(product_quantity)).group()
                                     except:
                                         product_quantity = ''
-                            if product_id in read_log_file():
-                                continue
                             print('current datetime------>', datetime.now())
                             dictionary = {
                                 'Fisher_product_category': product_category,
@@ -328,15 +356,18 @@ if __name__ == '__main__':
                                 'Fisher_product_name': product_name,
                                 'Fisher_product_quantity': product_quantity,
                                 'Fisher_product_price': product_price,
-                                'Fisher_product_url': product_url
+                                'Fisher_product_url': product_url,
+                                'Fisher_image_url': fisher_image_url,
+                                'Fisher_product_desc': product_desc
                             }
-                            articles_df = pd.DataFrame([dictionary])
+                            all_data.append(dictionary)
+                            articles_df = pd.DataFrame(all_data)
                             articles_df.drop_duplicates(subset=['Fisher_product_id', 'Fisher_product_name'], keep='first',
                                                         inplace=True)
-                            if os.path.isfile(f'{file_name}.csv'):
-                                articles_df.to_csv(f'{file_name}.csv', index=False, header=False, mode='a')
-                            else:
-                                articles_df.to_csv(f'{file_name}.csv', index=False)
-                            write_visited_log(product_id)
-            write_visited_log(main_url)
+                            output_dir = 'Scrapping Scripts/Output'
+                            if not os.path.exists(output_dir):
+                                os.makedirs(output_dir)
+                            file_path = os.path.join(output_dir, f'{file_name}.csv')
+                            articles_df.to_csv(file_path, index=False)
+
 

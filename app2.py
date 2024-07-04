@@ -126,11 +126,12 @@ def handle_schedule_scripts(data):
             schedule_task(script, start_date, start_time, run_script)
         scheduled_scripts.append(script)
 
-    with state_lock:
-        global_state['run_button_disabled'] = True
-        global_state['stop_button_disabled'] = True
-        global_state['schedule_button_disabled'] = True
-        global_state['stop_schedule_button_disabled'] = False
+    update_and_emit_global_state({
+        'run_button_disabled': True,
+        'stop_button_disabled': True,
+        'schedule_button_disabled': True,
+        'stop_schedule_button_disabled': False
+    })
 
     if recurrence_type == 'monthly':
         status = f'Scheduled {scheduled_scripts} monthly from {start_date} at {start_time}'
@@ -300,10 +301,27 @@ def stop_scripts():
         for script_name, status in script_status.items():
             if status == 'Running':
                 script_status[script_name] = 'Stopping'
+        socketio.emit('state_update', global_state)
         return jsonify({'status': 'Stopping all running scripts...'})
     except Exception as e:
         logging.error(f"Error stopping scripts: {str(e)}")
         return jsonify({'status': f'Error stopping scripts: {str(e)}'}), 500
+
+@socketio.on('stop_scripts')
+def handle_stop_scripts():
+    global stop_execution, script_status
+    stop_execution = True
+    for script_name, status in script_status.items():
+        if status == 'Running':
+            script_status[script_name] = 'Stopping'
+
+    with state_lock:
+        global_state['run_button_disabled'] = False
+        global_state['stop_button_disabled'] = True
+        global_state['schedule_button_disabled'] = False
+        global_state['scripts_running'] = False
+
+    emit('state_update', global_state, broadcast=True)
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -355,8 +373,12 @@ def schedule_scripts():
 
         tasks = ScheduledTask.query.all()
         # Emit WebSocket event to all clients immediately
+        # socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in tasks]}, broadcast=True)
         socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in tasks]})
-        return jsonify({'status': status, 'tasks': [task.to_dict() for task in tasks]})
+        return jsonify({
+            'status': f'Scheduled {scripts} for {start_date} at {start_time}',
+            'tasks': [task.to_dict() for task in tasks]
+        })
     except Exception as e:
         logging.error(f"Error scheduling script: {str(e)}")
         return jsonify({'status': f'Error scheduling script: {str(e)}'}), 500
@@ -378,17 +400,28 @@ def stop_scheduled_scripts():
     try:
         script_name = request.form.get('script_name')
         if script_name:
-            tasks = ScheduledTask.query.filter_by(script_name=script_name).all()
-            for task in tasks:
-                task.status = 'Cancelled'
-            db.session.commit()
-            return jsonify({'status': f'Scheduled task(s) for {script_name} cancelled'})
+            # Delete the specific task from the database
+            ScheduledTask.query.filter_by(script_name=script_name).delete()
         else:
-            ScheduledTask.query.update({ScheduledTask.status: 'Cancelled'})
-            db.session.commit()
-            return jsonify({'status': 'All scheduled tasks stopped.'})
+            # Delete all tasks from the database
+            ScheduledTask.query.delete()
+
+        db.session.commit()
+
+        # Clear in-memory tasks
+        stop_scheduled_task(script_name)
+
+        # Fetch updated tasks from the database
+        updated_tasks = ScheduledTask.query.all()
+
+        # Emit WebSocket event to all clients
+        socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, broadcast=True)
+
+
+        return jsonify({'status': 'Scheduled tasks cleared successfully.'})
     except Exception as e:
         logging.error(f"Error stopping scheduled tasks: {str(e)}")
+        db.session.rollback()
         return jsonify({'status': f'Error stopping scheduled tasks: {str(e)}'}), 500
 
 @app.route('/reset_state', methods=['POST'])
@@ -399,22 +432,36 @@ def reset_state():
     script_output = {}
     return jsonify({'status': 'State reset successfully'})
 
+def update_and_emit_global_state(new_state=None):
+    global global_state
+    with state_lock:
+        if new_state:
+            app.logger.info(f"Updating global state with: {new_state}")
+            global_state.update(new_state)
+        app.logger.info(f"Emitting global state: {global_state}")
+        socketio.emit('state_update', global_state, broadcast=True)
+
+@socketio.on('request_state_update')
+def handle_state_update_request():
+    update_and_emit_global_state()
+
+
 
 @app.route('/stop_all', methods=['POST'])
 def stop_all():
     global stop_execution, script_status, scheduled_tasks
     try:
         global global_state
-        with state_lock:
-            global_state['run_button_disabled'] = False
-            global_state['stop_button_disabled'] = True
-            global_state['schedule_button_disabled'] = False
-            global_state['stop_schedule_button_disabled'] = True
-            global_state['scripts_running'] = False
-            global_state['scheduled_tasks'] = []
+        update_and_emit_global_state({
+            'run_button_disabled': False,
+            'stop_button_disabled': True,
+            'schedule_button_disabled': False,
+            'stop_schedule_button_disabled': True,
+            'scripts_running': False,
+            'scheduled_tasks': []
+        })
 
-
-
+        emit('state_update', global_state, broadcast=True)
 
         # Stop all running scripts
         stop_execution = True
@@ -480,6 +527,6 @@ if __name__ == '__main__':
         db.drop_all()
         db.create_all()
 
-    # socketio = SocketIO(app)
+    socketio = SocketIO(app)
     socketio.run(app, host='192.168.0.161', port=5000, debug=True)
 
