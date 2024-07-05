@@ -6,18 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="Implemented server side socket">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Nasco_products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/Nasco_products.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/Carolina_Products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Carolina_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/Fisher_Products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Fisher_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/Flinn_products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Flinn_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/Frey Products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Frey_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/Nasco_Products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Nasco_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/VWR_WARDS_Products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/VWR_WARDS_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/module_package.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/module_package.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Scrapping Scripts/wardsci_products.py" beforeDir="false" afterPath="$PROJECT_DIR$/Scrapping Scripts/Wardsci_Products.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visited_Nasco_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_Nasco_urls.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app2.py" beforeDir="false" afterPath="$PROJECT_DIR$/app2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/status_log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/status_log.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
@@ -36,7 +25,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="V2.3-Websocket" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />

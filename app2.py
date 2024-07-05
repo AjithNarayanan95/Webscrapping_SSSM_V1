@@ -406,16 +406,27 @@ def stop_scheduled_scripts():
             # Delete all tasks from the database
             ScheduledTask.query.delete()
 
+        with state_lock:
+            global_state['run_button_disabled'] = False
+            global_state['stop_button_disabled'] = True
+            global_state['schedule_button_disabled'] = False
+            global_state['stop_schedule_button_disabled'] = True
+
+
+
         db.session.commit()
 
         # Clear in-memory tasks
         stop_scheduled_task(script_name)
 
+        stop_all_running_scripts()
+
         # Fetch updated tasks from the database
         updated_tasks = ScheduledTask.query.all()
 
         # Emit WebSocket event to all clients
-        socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, broadcast=True)
+        # socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, broadcast=True)
+        socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, namespace='/')
 
 
         return jsonify({'status': 'Scheduled tasks cleared successfully.'})
@@ -423,6 +434,13 @@ def stop_scheduled_scripts():
         logging.error(f"Error stopping scheduled tasks: {str(e)}")
         db.session.rollback()
         return jsonify({'status': f'Error stopping scheduled tasks: {str(e)}'}), 500
+
+def stop_all_running_scripts():
+    global stop_execution, script_status
+    stop_execution = True
+    for script_name in script_status:
+        if script_status[script_name] == 'Running':
+            script_status[script_name] = 'Stopping'
 
 @app.route('/reset_state', methods=['POST'])
 def reset_state():
