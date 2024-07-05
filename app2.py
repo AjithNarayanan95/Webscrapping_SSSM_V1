@@ -92,7 +92,7 @@ def handle_run_scripts(data):
 
 @socketio.on('stop_scripts')
 def handle_stop_scripts():
-    global stop_execution, script_status
+    global stop_execution, script_status, global_state
     stop_execution = True
     for script_name, status in script_status.items():
         if status == 'Running':
@@ -104,7 +104,30 @@ def handle_stop_scripts():
         global_state['schedule_button_disabled'] = False
         global_state['scripts_running'] = False
 
+    print("Global state after stopping:", global_state)  # Add this line
     emit('state_update', global_state, broadcast=True)
+
+    def enable_scheduling():
+        with state_lock:
+            global_state['schedule_button_disabled'] = False
+        emit('state_update', global_state, broadcast=True)
+
+    socketio.add_timeout(0.5, enable_scheduling)
+
+# Function to help debug the scheduling part
+def debug_scheduling():
+    with state_lock:
+        print("Current global state for scheduling:", global_state)
+        if not global_state['scripts_running'] and not global_state['stop_button_disabled']:
+            print("Scheduling should work correctly now.")
+        else:
+            print("There might be an issue with the scheduling logic.")
+
+# Call this function in relevant places, such as after stopping scripts and before scheduling
+
+# Call this function whenever you experience the issue
+debug_scheduling()
+
 
 
 @socketio.on('schedule_scripts')
@@ -181,7 +204,7 @@ def run_script(script_name):
         logging.debug(f"Starting script: {script_name}")
         process = subprocess.Popen(['python', script_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    universal_newlines=True)
-
+        time.sleep(2)
         while True:
             if stop_execution or script_status[script_name] == 'Stopping':
                 logging.debug(f"Stopping script: {script_name}")
@@ -223,6 +246,7 @@ def run_script(script_name):
     finally:
         if script_name in script_status and 'Running' in script_status[script_name]:
             script_status[script_name] = f'Completed (URLs scraped: {url_count})'
+        logging.debug(f"Script {script_name} finished with status: {script_status[script_name]}")
 
 UNWANTED_SCRIPTS = ['module_package.py']
 @app.route('/')
@@ -309,7 +333,7 @@ def stop_scripts():
 
 @socketio.on('stop_scripts')
 def handle_stop_scripts():
-    global stop_execution, script_status
+    global stop_execution, script_status, global_state
     stop_execution = True
     for script_name, status in script_status.items():
         if status == 'Running':
@@ -321,7 +345,25 @@ def handle_stop_scripts():
         global_state['schedule_button_disabled'] = False
         global_state['scripts_running'] = False
 
+    print("Global state after stopping:", global_state)  # Add this line
     emit('state_update', global_state, broadcast=True)
+
+    def enable_scheduling():
+        with state_lock:
+            global_state['schedule_button_disabled'] = False
+        emit('state_update', global_state, broadcast=True)
+
+    socketio.add_timeout(0.5, enable_scheduling)
+
+def debug_scheduling():
+    with state_lock:
+        print("Current global state for scheduling:", global_state)
+        if not global_state['scripts_running'] and not global_state['stop_button_disabled']:
+            print("Scheduling should work correctly now.")
+        else:
+            print("There might be an issue with the scheduling logic.")
+
+# Call this function in relevant places, such as after stopping scripts and before scheduling
 
 @app.route('/status', methods=['GET'])
 def status():
@@ -363,7 +405,10 @@ def schedule_scripts():
                 task = schedule_task(script, start_date, start_time, run_script)
 
             if task is None:
+                logging.error(f"Failed to schedule script: {script}")
                 return jsonify({'status': f'Error scheduling script: {script}'}), 500
+            else:
+                logging.info(f"Successfully scheduled script: {script}")
 
         db.session.commit()
 
@@ -371,12 +416,12 @@ def schedule_scripts():
         if recurrence_type == 'monthly':
             status = f'Scheduled {scheduled_scripts} monthly from {start_date} at {start_time}'
 
+        logging.info(status)
+
         tasks = ScheduledTask.query.all()
-        # Emit WebSocket event to all clients immediately
-        # socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in tasks]}, broadcast=True)
         socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in tasks]})
         return jsonify({
-            'status': f'Scheduled {scripts} for {start_date} at {start_time}',
+            'status': status,
             'tasks': [task.to_dict() for task in tasks]
         })
     except Exception as e:
@@ -412,8 +457,6 @@ def stop_scheduled_scripts():
             global_state['schedule_button_disabled'] = False
             global_state['stop_schedule_button_disabled'] = True
 
-
-
         db.session.commit()
 
         # Clear in-memory tasks
@@ -425,8 +468,14 @@ def stop_scheduled_scripts():
         updated_tasks = ScheduledTask.query.all()
 
         # Emit WebSocket event to all clients
-        # socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, broadcast=True)
         socketio.emit('tasks_updated', {'tasks': [task.to_dict() for task in updated_tasks]}, namespace='/')
+
+        return jsonify({'status': 'Scheduled tasks cleared successfully.'})
+    except Exception as e:
+        logging.error(f"Error stopping scheduled tasks: {str(e)}")
+        db.session.rollback()
+        return jsonify({'status': f'Error stopping scheduled tasks: {str(e)}'}), 500
+
 
 
         return jsonify({'status': 'Scheduled tasks cleared successfully.'})
@@ -495,6 +544,7 @@ def stop_all():
         return jsonify({'status': 'All scheduled tasks and running scripts have been stopped.'})
     except Exception as e:
         return jsonify({'status': f'Error stopping all tasks and scripts: {str(e)}'}), 500
+
 
 
 @app.route('/get_state', methods=['GET'])
