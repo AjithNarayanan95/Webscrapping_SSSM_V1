@@ -24,11 +24,7 @@ def schedule_task(script_name, start_date, start_time, run_script):
             logging.error(f"Scheduled time {start_date} {start_time} is in the past.")
             return jsonify({'status': f'Error: Scheduled time {start_date} {start_time} is in the past'}), 400
 
-        if delay < 1:  # If delay is less than 1 second, set it to 1 second
-            delay = 1
-
         def scheduled_run():
-            logging.info(f"Executing scheduled task for {script_name}")
             run_script(script_name)
             update_task_status(script_name, 'Completed')
 
@@ -70,9 +66,6 @@ def stop_scheduled_task(script_name=None):
     else:
         logging.info('All scheduled tasks stopped.')
         scheduled_tasks = []
-
-    emit_task_update()  # Ensure that the task update is emitted
-
 
     # We don't need to emit here as it's now done in the route handler
 

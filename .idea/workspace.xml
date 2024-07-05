@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="Implemented Webscoket with Scheduling DB">
+    <list default="true" id="92071e0e-335c-45f6-a542-95cb45e027c9" name="Changes" comment="Tried fixing Stop &gt; Scheduling functionality">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/VWR_WARDS_Products.csv" beforeDir="false" afterPath="$PROJECT_DIR$/VWR_WARDS_Products.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visited_VWR_urls.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visited_VWR_urls.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app2.py" beforeDir="false" afterPath="$PROJECT_DIR$/app2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/instance/scheduled_tasks.db" beforeDir="false" afterPath="$PROJECT_DIR$/instance/scheduled_tasks.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/scheduler.py" afterDir="false" />
@@ -252,7 +250,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720161328527</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Tried fixing Stop &gt; Scheduling functionality">
+      <option name="closed" value="true" />
+      <created>1720171180796</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1720171180796</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -260,6 +266,7 @@
     <MESSAGE value="UI Changes" />
     <MESSAGE value="Implemented server side socket" />
     <MESSAGE value="Implemented Webscoket with Scheduling DB" />
-    <option name="LAST_COMMIT_MESSAGE" value="Implemented Webscoket with Scheduling DB" />
+    <MESSAGE value="Tried fixing Stop &gt; Scheduling functionality" />
+    <option name="LAST_COMMIT_MESSAGE" value="Tried fixing Stop &gt; Scheduling functionality" />
   </component>
 </project>
